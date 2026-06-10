@@ -48,8 +48,6 @@ RUN \
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-RUN chown -R ${HOST_UID}:${HOST_GID} /opt/conda
-
 USER ${HOST_UNAME}
 
 RUN mamba shell init --shell bash --root-prefix=~/.local/share/mamba
@@ -75,7 +73,6 @@ RUN mamba create -y -n dev-env \
     mamba clean -afy
 
 # Set up the environment paths so the container defaults to using the new dev-env
-ENV PATH=/opt/conda/envs/dev-env/bin:$PATH
 ENV CONDA_DEFAULT_ENV=dev-env
 
 # Ensure interactive shells also activate the environment
