@@ -1,0 +1,38 @@
+{
+  "name": "LaTeX & CUDA Dev",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "dev-env",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "latex-workshop.view.pdf.viewer": "tab",
+        "latex-workshop.latex.autoBuild.run": "onFileChange",
+        "python.defaultInterpreterPath": "/usr/bin/python3"
+      },
+      "extensions": [
+        "James-Yu.latex-workshop",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.vscode-pylint",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff",
+        "mads-hartmann.bash-ide-vscode",
+        "ms-azuretools.vscode-containers",
+        "ms-vscode.cpptools",
+        "waderyan.gitblame",
+        "mhutchie.git-graph",
+        "donjayamanne.githistory",
+        "shaharkazaz.git-merger",
+        "arturock.gitstash",
+        "codezombiech.gitignore",
+        "christian-kohler.path-intellisense",
+        "esbenp.prettier-vscode",
+        "njqdev.vscode-python-typehint",
+        "ms-python.debugpy",
+        "kevinrose.vsc-python-indent",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}
