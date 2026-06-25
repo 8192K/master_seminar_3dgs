@@ -1,5 +1,4 @@
 \documentclass[seminar,english]{AIGpaper}
-
 \usepackage{graphicx}					           % enhanced support for graphics
 \usepackage{amsfonts}					           % math fonts
 \usepackage{amssymb}					           % math symbols
@@ -7,36 +6,47 @@
 \usepackage{amsthm}                                % for theorems and other environments
 \usepackage{url}                            % for linking external urls
 %\usepackage{booktabs}                      % for nicer tables 
-%\usepackage[hidelinks]{hyperref}           % for automatic hyperlinks
+\usepackage[hidelinks]{hyperref}           % for automatic hyperlinks
 %\usepackage{tikz}                          % creating graphs and other structures
+\usepackage{microtype}
+\usepackage{fnpct}
 
-\title{Seminar Artificial Intelligence - Visual Computing\break 3D Gaussian Splatting}
+\title{Seminar: Artificial Intelligence - Visual Computing\\3D Gaussian Splatting}
 \author{Sebastian Frehmel}
 
-\englishabstract{3D Gaussian Splatting (3DGS) denotes a seminal approach to 3D reconstruction and novel-view synthesis which was first published in 2023. We introduce the underlying motivation, mechanisms and concepts of 3DGS as of the original publication. We then proceed to show algorithmic advancements in the three years since and focus on 3DGS Video to illustrate a practical application thereof.}
-
+\englishabstract{3D Gaussian Splatting (3DGS) denotes a seminal approach to 3D reconstruction and novel-view synthesis which was first published in 2023. This paper introduces the underlying motivation, algorithms and concepts of 3DGS in full detail as of the original publication. We conclude by presenting a selection of applications of 3DGS, focussing on dynamic scene reconstruction as a more in-depth example.}
 
 \begin{document}
 \maketitle
-\section{Motivation}
-sdkfjhsd kljsd  sdfi sdlkw;wl;ksd;lkwl nwjnfd jsdfkjbdfskj bfkj w;l nlksdflksd lksdlkfjow ljlkjdf slnkf;ls ;lksdlks;dlfk ;od jsd mk
+\section{Introduction \& Motivation}
+\begin{itemize}
+    \item 3D reconstruction in general, history
+    \item Radiance fields (implicit vs. explicit)
+    \item NeRF: Neural network, continuous, black box, computation-heavy
+    \item Intent: 1080p and real-time so far not possible
+\end{itemize}
 
-\section{Pioneering Work \& Important Terminology}
+\section{The 3D Gaussian Data Structure}
+\cite{kerbl3DGaussianSplatting2023}
+\cite{kerbl3DGaussianSplatting2023a}
+\cite{NEURIPS2025_6c39d1a7}
 
-\section{3D Gaussians}
+\section{Training Procedure}
+\subsection{Differentiable Tile-Based Rasterization (Forward Pass)}
+\subsection{Gradient Flow Through the Renderer (Backward Pass)}
+\subsection{Adaptive Density Control}
 
-\section{Algorithm}
+\section{Novel-View Synthesis}
 
-\subsection{3D Reconstruction}
+\section{Applications and Use Cases }
+\subsection{Dynamic Scene Reconstruction}
 
-\subsection{Novel-View Synthesis}
+\section{Conclusion \& Future Developments}
 
-\section{Performance}
+\newpage
 
-\section{Algorithmic Advancements}
+\bibliographystyle{apalike}
+\bibliography{references}
 
-\section{3D Gaussian Spatting Video (''4DGS'')}
-
-\addreferences
 \makestatement{1}
 \end{document}
