@@ -1,0 +1,50 @@
+ACS Guide 2022
+(1) Kerbl, B.; Kopanas, G.; Leimkuehler, T.; Drettakis, G. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans. Graph. 2023, 42 (4), 1–14. https://doi.org/10.1145/3592433.
+(1)
+
+AMA
+1. Kerbl B, Kopanas G, Leimkuehler T, Drettakis G. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans Graph. 2023;42(4):1-14. doi:10.1145/3592433
+1
+
+APA
+Kerbl, B., Kopanas, G., Leimkuehler, T., & Drettakis, G. (2023). 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Transactions on Graphics, 42(4), 1–14. https://doi.org/10.1145/3592433
+(Kerbl et al., 2023)
+
+APSA
+Kerbl, Bernhard, Georgios Kopanas, Thomas Leimkuehler, and George Drettakis. 2023. “3D Gaussian Splatting for Real-Time Radiance Field Rendering.” ACM Transactions on Graphics 42(4): 1–14. doi:10.1145/3592433.
+(Kerbl et al. 2023)
+
+ASA
+Kerbl, Bernhard, Georgios Kopanas, Thomas Leimkuehler, and George Drettakis. 2023. “3D Gaussian Splatting for Real-Time Radiance Field Rendering.” ACM Transactions on Graphics 42(4):1–14. doi:10.1145/3592433.
+(Kerbl et al. 2023)
+
+Kerbl, Bernhard, Georgios Kopanas, Thomas Leimkuehler, and George Drettakis. 2023. “3D Gaussian Splatting for Real-Time Radiance Field Rendering.” ACM Transactions on Graphics 42 (4): 1–14. https://doi.org/10.1145/3592433.
+(Kerbl et al. 2023)
+
+Chicago Manual
+[1] B. Kerbl, G. Kopanas, T. Leimkuehler, and G. Drettakis, “3D Gaussian Splatting for Real-Time Radiance Field Rendering,” ACM Trans. Graph., vol. 42, no. 4, pp. 1–14, Aug. 2023, doi: 10.1145/3592433.
+[1]
+
+Cite them right
+Kerbl, B. et al. (2023) “3D Gaussian Splatting for Real-Time Radiance Field Rendering,” ACM Transactions on Graphics, 42(4), pp. 1–14. Available at: https://doi.org/10.1145/3592433.
+(Kerbl et al., 2023)
+
+Elsevier
+Kerbl, B., Kopanas, G., Leimkuehler, T., Drettakis, G., 2023. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans. Graph. 42, 1–14. https://doi.org/10.1145/3592433
+(Kerbl et al., 2023)
+
+IEEE
+[1] B. Kerbl, G. Kopanas, T. Leimkuehler, and G. Drettakis, “3D Gaussian Splatting for Real-Time Radiance Field Rendering,” ACM Trans. Graph., vol. 42, no. 4, pp. 1–14, Aug. 2023, doi: 10.1145/3592433.
+[1]
+
+MLA
+Kerbl, Bernhard, et al. “3D Gaussian Splatting for Real-Time Radiance Field Rendering.” ACM Transactions on Graphics, vol. 42, no. 4, Aug. 2023, pp. 1–14. DOI.org (Crossref), https://doi.org/10.1145/3592433.
+(Kerbl et al.)
+
+Nature
+1. Kerbl, B., Kopanas, G., Leimkuehler, T. & Drettakis, G. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans. Graph. 42, 1–14 (2023).
+1
+
+NLM Medicine
+1. Kerbl B, Kopanas G, Leimkuehler T, Drettakis G. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans Graph. 2023 Aug;42(4):1–14. doi:10.1145/3592433
+(1)
