@@ -21,44 +21,19 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 \begin{document}
 \maketitle
 \section{Introduction to 3D Reconstruction}
-3D Gaussian Splatting is a new technology in the field of 3D reconstruction which requires introducing certain basic terminology first.
-
-\textbf{3D reconstruction} marks a field in computer graphics which allows creating 3D \textbf{scenes} of different kinds from a given input like a set of images or frames of a video.
-Once this 3D scene has been created, \textbf{novel-view synthesis} refers to the process of gaining previously non-existing imagery from this 3D scene. However, both processes are commonly combined and referenced by the term 3D reconstruction.
-
-First efforts in this field date back to the 1990s with work on multi-view geometry \cite{liuSurvey3DReconstruction2025} and remained a niche area of research due to lack of powerful models until the general emergence of neural networks in the late 2010s. 
-Neural networks for the first time allowed creating 3D scenes with realistic image quality using the radiance field approach. 
-An \textbf{implicit radiance field} is based on the mathematical concept of the five-dimensional plenoptic function $L: x, y, z, \delta, \phi \rightarrow c, \sigma$ which expresses a scene by continuously mapping any given point $(x, y, z)$ in space and a set of viewing angles $\delta$ and $\phi$ to a color $c$ and an opacity $\sigma$ at that point.
-\textbf{Explicit radiance fields} allow only a finite set of points to apply the plenoptic function to, using for example a rigid 3D grid forming ''voxels''.
-
-One well-known implementation of radiance fields are \textbf{Neural Radiance Fields} (NeRFs). NeRFs take a set of input images and use a neural network to learn an implicit radiance field representation of the resulting scene which means the full scene is encoded in the neural network's weights. 
-In order to perform novel-view synthesis for a NeRF, a technique called \textbf{volumetric ray marching} is being employed. 
-For every pixel in the novel view the algorithm ''shoots'' a ray through the implicit radiance field resulting in a very high number of queries to the neural network for each (discretized) point along the path of the ray before adding up all predicted RGB and opacity values to form the final color value of each pixel.
-For more information on NeRFs refer to the previous paper in this seminar.
-
-The other aspect which is important to know is the concept of \textbf{splatting}. First introduced in 1991 by Westover \cite{Westover1991SplattingAP} and refined later in the early 2000s by a group around Zwicker (\cite{zwickerEWAVolumeSplatting2001}, \cite{zwickerSurfaceSplatting2001}), it takes the reverse approach to ray marching by letting all elements in the 3D scene move onto the view plane, a process which colloquially can be called ''splatting'' or ''squashing''. It was also Zwicker et al in the same publications who introduced ''3D Gaussians'' as a data structure to simplify and extend splatting.
-
-Lastly, there are important concepts in computer graphics that need explaining especially in the context of splatting, starting with \textbf{worldspace} and \textbf{viewspace}. The former describing the space in which the 3D scene is being built and the latter describing the space into which such a 3D scene has to be transformed for novel-view synthesis. Then there is the near plane, also called the \textbf{view plane} or projection plane and the \textbf{far plane} as well as the \textbf{camera pose} or position. The camera pose and its \textbf{field of view} (FOV) decide which elements of the scene between the view plane and the far plane are to be included in the projection onto the view plane. This setup is known as the ''pyramid of vision'' or \textbf{view frustum} as it takes the shape of a frustum, see figure \ref{fig:view_frustum}.
+\input{chapters/ch_01}
 
 \section{Motivation for 3D Gaussian Splatting}
-What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''. This longer terminology makes it clear that 3DGS is an implementation of a radiance field, just like Neural Radiance Fields (NeRFs). In contrast to NeRFs, 3DGS uses an explicit representation of radiance fields.
-
-3DGS was introduced by Kerbl et al in late 2023 \cite{kerbl3DGaussianSplatting2023} which makes it a very young technology. Yet, their paper has had a fundamental impact in the field of 3D reconstruction standing at over 10.500 citations \cite{researchGateKerbl} in less than three years. While image quality of NeRF-based implementations is generally very high, training the foundational neural network from a set of input images took prohibitively long for single scenes (state-of-the-art models like MiPS-NeRF need up to 48 hours on high-end hardware). Furthermore, novel-view synthesis would only be possible for single images, real-time novel-view synthesis was largely not feasible unless reducing scene quality greatly. The fastest NeRF-based solution reverted to an explicit representation of radiance fields like voxels (Plenoxels) which by itself led to a reduction in quality due to the inherent reduction of precision.
-
-Ray marching is very time-consuming and has led to some implementations of NeRFs switching to explicit radiance field representations and losing the neural network for novel-view synthesis allthogether.
-
-3DGS as invented by \cite{kerbl3DGaussianSplatting2023} is in essence a major engineering accomplishment combining previously disjointed research in the fields of graphics and machine learning into the first explicit, differentiable, unstructured and primitive-based radiance field architecture using the power of modern GPUs.
-
-\begin{itemize}
-    \item NeRF: Neural network, continuous, black box, computation-heavy
-    \item Intent: 1080p and real-time so far not possible
-\end{itemize}
+\input{chapters/ch_02}
 
 \section{The 3D Gaussian Data Structure}
 \cite{kerbl3DGaussianSplatting2023}
 
+What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
+
 \section{Training Procedure}
 \subsection{Differentiable Tile-Based Rasterization (Forward Pass)}
+\label{ch:rasterizer}
 \subsection{Gradient Flow Through the Renderer (Backward Pass)}
 \subsection{Adaptive Density Control}
 
