@@ -27,6 +27,20 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 \input{chapters/ch_02}
 
 \section{The 3D Gaussian Data Structure}
+Analyzing the original authors' \cite{kerbl3DGaussianSplatting2023} repository \cite{kerblRepo} or consulting survey papers like Bagdasarian et al \cite{bagdasarian3DGSzipSurvey3D2025} indicates that a 3D Gaussian is a data structure consisting of 14 to 59 attributes:
+%As previously mentioned, 3D Gaussians were conceived by Zwicker et al in 2001 \cite{zwickerSurfaceSplatting2001}, however in the original version, 3D Gaussians were perfect spheres.
+
+\begin{itemize}
+    \item Position $\mu$: three-dimensional coordinates in worldspace for the origin of the 3D Gaussian. (3 attributes)
+    \item Opacity $o$: the peak opacity at the center of the 3D Gaussian. Can be any number but is passed through a sigmoid function to limit it to $[0,1]$. 0 maps to 0.5, -5 to 0.01 and 5 to 0.99 for example. (1 attribute)
+    \item Covariance matrix $\Sigma$: Originally a $3\times 3$ matrix, but decomposed into 3 scaling values and 4 rotational values (''quaternions''). The covariance matrix is used to calculate 3D shape and rotation of the 3D Gaussian. The decomposition of the covariance matrix is pivotal for the backpropagation process and we'll return to it in chapter \ref{ch:matrix_decomp}. (7 attributes)
+    \item Spherical harmonics coefficients c: models view-dependent colors and specular reflections. Spherical harmonics come in four degrees. SH0 is a simple RGB value denoting a solid color of the 3d Gaussian that is not dependent on viewing angles. Degrees SH1 to SH3 account for 15 attributes each adding more and more to realism. SH3 is recommended for 3DGS. For the remainder of this paper we will disregard the complexity of spherical harmonics as the processes for training and novel-view synthesis can be explained without any notion of color. (3-48 attributes)
+\end{itemize}
+The reason the 3D Gaussian is called ''Gaussian'' lies in its opacity distribution $\alpha$ which is modelled after the dimension-agnostic form of the normal distribution: $$ \alpha(p) = o \times \exp\left(-\frac{1}{2}(p - \mu)^T \Sigma^{-1}(p - \mu)\right) $$ with $p$ being any point in worldspace and $\Sigma^{-1}$ the inverse of the covariance matrix. In other words we have a central base opacity, a three-dimensional bell curve and multiply the opacity with the rapidly decreasing value of the normal distribution. This way, a 3D Gaussian becomes more transparent toward its edges. Mathematically each 3D Gaussian reaches into infinity with values asymptotically near 0 the farther from the center the opacity is being calculated. To remedy this effect, 3DGS enforces a hard 3-Sigma boundary meaning that everything outside of 3 standard deviations from $\mu$ is being culled, establishing a bounding box which captures 99.7\% of the 3D Gaussian.
+
+\subsection{3D Gaussian Covariance Matrix Decomposition}
+\label{ch:matrix_decomp}
+
 \cite{kerbl3DGaussianSplatting2023}
 
 What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
