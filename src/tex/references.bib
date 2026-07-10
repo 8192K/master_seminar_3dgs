@@ -20,6 +20,21 @@
   note         = {Viewed on July 6th, 2026}
 }
 
+@misc{kerblWebsite,
+  author = {{INRIA}},
+  title = {{Project Website for Kerbl et al: 3D Gaussian Splatting for Real-Time Radiance Field Rendering}},
+  howpublished = {\url{https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting}},
+  note = {Viewed on July 2nd, 2026}
+}
+
+@misc{kerblRepo,
+  author = {Kerbl, Bernhard and Kopanas, Georgios and Leimkuehler, Thomas and Drettakis, George},
+  title = {{GitHub Repository: gaussian-splatting}},
+  howpublished = {\url{https://github.com/graphdeco-inria/gaussian-splatting}},
+  note = {Viewed on July 25th, 2026}
+}
+
+
 @phdthesis{Westover1991SplattingAP,
   title={{{Splatting: A Parallel, Feed-Forward Volume Rendering Algorithm}}},
   school={{The University of North Carolina at Chapel Hill}},
@@ -43,7 +58,7 @@
 }
 
 @inproceedings{zwickerEWAVolumeSplatting2001,
-  title = {{{EWA}} Volume Splatting},
+  title = {{EWA Volume Splatting}},
   booktitle = {Proceedings {{Visualization}}, 2001},
   author = {Zwicker, Matthias and Pfister, Hanspeter and {van Baar}, Jeroen and Gross, Markus},
   year = {2001},
@@ -55,7 +70,7 @@
 }
 
 @inproceedings{zwickerSurfaceSplatting2001,
-  title = {Surface Splatting},
+  title = {{Surface Splatting}},
   booktitle = {Proceedings of the 28th Annual Conference on {{Computer}} Graphics and Interactive Techniques},
   author = {Zwicker, Matthias and Pfister, Hanspeter and {van Baar}, Jeroen and Gross, Markus},
   year = 2001,
@@ -92,4 +107,96 @@
   issn = {0167-7055, 1467-8659},
   doi = {10.1111/cgf.70078},
   archiveprefix = {arXiv},
+}
+
+@article{tewariStateArtNeural2020,
+  title = {State of the {{Art}} on {{Neural Rendering}}},
+  author = {Tewari, Ayush and Fried, Ohad and Thies, Justus and Sitzmann, Vincent and Lombardi, Stephen and Sunkavalli, Kalyan and {Martin-Brualla}, Ricardo and Simon, Tomas and Saragih, Jason and Nie{\ss}ner, Matthias and Pandey, Rohit and Fanello, Sean and Wetzstein, Gordon and Zhu, Jun-Yan and Theobalt, Christian and Agrawala, Maneesh and Shechtman, Eli and Goldman, Dan B. and Zollh{\"o}fer, Michael},
+  journal= {Eurographics},
+  volume = {39},
+  number = {2},
+  year = 2020,
+  month = apr,
+  eprint = {2004.03805},
+  primaryclass = {cs.CV},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2004.03805}
+}
+
+@misc{heSurvey3DGaussian2026,
+  title = {A {{Survey}} on {{3D Gaussian Splatting Applications}}: {{Segmentation}}, {{Editing}}, and {{Generation}}},
+  shorttitle = {A {{Survey}} on {{3D Gaussian Splatting Applications}}},
+  author = {He, Shuting and Ji, Peilin and Yang, Yitong and Wang, Changshuo and Ji, Jiayi and Wang, Yinglin and Ding, Henghui},
+  year = 2026,
+  month = jun,
+  number = {arXiv:2508.09977},
+  eprint = {2508.09977},
+  primaryclass = {cs.CV},
+  doi = {10.48550/arXiv.2508.09977},
+  urldate = {2026-06-16},
+}
+
+@misc{mildenhallNeRFRepresentingScenes2020,
+  title = {{{NeRF}}: {{Representing Scenes}} as {{Neural Radiance Fields}} for {{View Synthesis}}},
+  shorttitle = {{{NeRF}}},
+  author = {Mildenhall, Ben and Srinivasan, Pratul P. and Tancik, Matthew and Barron, Jonathan T. and Ramamoorthi, Ravi and Ng, Ren},
+  year = 2020,
+  month = aug,
+  number = {arXiv:2003.08934},
+  eprint = {2003.08934},
+  primaryclass = {cs.CV},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2003.08934},
+  urldate = {2026-07-10}
+}
+
+@article{hubertEditingImplicitExplicit2025a,
+  title = {{Editing Implicit and Explicit Representations of Radiance Fields: A Survey}},
+  shorttitle = {Editing Implicit and Explicit Representations of Radiance Fields},
+  author = {Hubert, Arthur and Elghazaly, Gamal and Frank, Rapha{\"e}l},
+  year = 2025,
+  month = sep,
+  journal = {Machine Vision and Applications},
+  volume = {36},
+  number = {6},
+  pages = {119},
+  issn = {1432-1769},
+  doi = {10.1007/s00138-025-01742-4}
+}
+
+@book{marschnerFundamentalsComputerGraphics2021,
+  title = {Fundamentals of {{Computer Graphics}}},
+  author = {Marschner, Steve and Shirley, Peter},
+  year = 2021,
+  month = sep,
+  edition = {5},
+  publisher = {A K Peters/CRC Press},
+  address = {New York},
+  doi = {10.1201/9781003050339},
+  isbn = {978-1-003-05033-9}
+}
+
+@misc{barronMipNeRFMultiscaleRepresentation2021,
+  title = {Mip-{{NeRF}}: {{A Multiscale Representation}} for {{Anti-Aliasing Neural Radiance Fields}}},
+  shorttitle = {Mip-{{NeRF}}},
+  author = {Barron, Jonathan T. and Mildenhall, Ben and Tancik, Matthew and Hedman, Peter and {Martin-Brualla}, Ricardo and Srinivasan, Pratul P.},
+  year = 2021,
+  month = aug,
+  number = {arXiv:2103.13415},
+  eprint = {2103.13415},
+  primaryclass = {cs.CV},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2103.13415}
+}
+
+@inproceedings{fridovich-keilPlenoxelsRadianceFields2022,
+  title = {Plenoxels: {{Radiance Fields}} without {{Neural Networks}}},
+  shorttitle = {Plenoxels},
+  booktitle = {2022 {{IEEE}}/{{CVF Conference}} on {{Computer Vision}} and {{Pattern Recognition}} ({{CVPR}})},
+  author = {{Fridovich-Keil}, Sara and Yu, Alex and Tancik, Matthew and Chen, Qinhong and Recht, Benjamin and Kanazawa, Angjoo},
+  year = 2022,
+  month = jun,
+  pages = {5491--5500},
+  issn = {2575-7075},
+  doi = {10.1109/CVPR52688.2022.00542}
 }

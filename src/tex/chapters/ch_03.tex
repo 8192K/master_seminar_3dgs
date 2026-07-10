@@ -1,0 +1,28 @@
+Analyzing the original authors' \cite{kerbl3DGaussianSplatting2023} repository \cite{kerblRepo} or consulting survey papers like \cite{bagdasarian3DGSzipSurvey3D2025} indicates that a 3D Gaussian is a data structure consisting of 14 to 59 attributes:
+%As previously mentioned, 3D Gaussians were conceived by Zwicker et al in 2001 \cite{zwickerSurfaceSplatting2001}, however in the original version, 3D Gaussians were perfect spheres.
+
+\begin{itemize}
+    \item Position $\mu$: three-dimensional coordinates in worldspace for the origin of the 3D Gaussian. (3 attributes)
+    \item Opacity $o$: the peak opacity at point $\mu$. Can be any number but is passed through a sigmoid function to bound it to $(0,1)$. (1 attribute)
+    \item Covariance matrix $\Sigma$: Originally a $3\times 3$ matrix, but decomposed into three scaling values and four rotational values (''quaternions''). The covariance matrix determines 3D shape and rotation of the 3D Gaussian. Decomposing the covariance matrix is pivotal for the backpropagation process, see chapter \ref{ch:matrix_decomp}. (7 attributes)
+    \item Spherical harmonics coefficients: model view-dependent colors and specular reflections. Spherical harmonics come in four degrees. SH0 is a simple RGB value denoting a solid color of the 3D Gaussian that is not dependent on viewing angles. Degrees SH1 to SH3 contribute 15 attributes each adding more and more to realism. SH3 is recommended for 3DGS. For the remainder of this paper we will disregard spherical harmonics and their complexity as the processes for training and novel-view synthesis can be explained without any notion of color. (3-48 attributes)
+\end{itemize}
+The reason the 3D Gaussian is called \textit{Gaussian} lies in its opacity distribution $\alpha$ which is modelled after the dimension-agnostic form of the normal distribution: $$ \alpha(p) = o \times \exp\left(-\frac{1}{2}(p - \mu)^T \Sigma^{-1}(p - \mu)\right) $$ with $p$ being any point in worldspace and $\Sigma^{-1}$ the inverse of the covariance matrix.
+In other words we multiply the peak opacity value with a probability from the three-dimensional normal distribution shaped by $\Sigma$. This way, a 3D Gaussian becomes rapidly more transparent toward its edges. Mathematically each 3D Gaussian reaches into infinity with values asymptotically near 0 the farther from the center the opacity is being calculated. 
+To remedy this effect, 3DGS enforces a hard 3-Sigma boundary meaning that everything outside of three standard deviations from $\mu$ is being culled, establishing an ellipsoid bounding shape which captures 99.7\% of the 3D Gaussian.
+
+The shape a 3D Gaussian takes is therefore only defined by the density of its opacity distribution or as it is usually visualized, by its ellipsoid bounding shape.
+
+\subsection{3D Gaussian Covariance Matrix Decomposition}
+\label{ch:matrix_decomp}
+For the entire learning process to work with backpropagation and gradient descent, a 3D Gaussian has to be differentiable. The original inception of a 3D Gaussian by Zwicker et al \cite{zwickerSurfaceSplatting2001} did not account for differentiability (or spherical harmonics for that matter), they were only interested in elaborating on the concept of splatting. 
+\newpage
+
+During backpropagation the algorithm would have to come up with new, better values for the covariance matrix $\Sigma$ toward the direction gradient descent is pointing. However, in order to make sense geometrically, a covariance matrix in this case has to be positive semi-definite which means the determinant has to be $>=0$. 
+As running a loop during backpropagation to find new valid values for the entire covariance matrix until the whole matrix is positive semi-definite again while still satisfying gradient descent would be far too costly, Kerbl et al \cite{kerbl3DGaussianSplatting2023} proposed a clever decomposition of the convariance matrix.
+
+$\Sigma$ can be decomposed into a $3\times 3$ scaling matrix $S$ and a $3\times 3$ rotational matrix $R$: $\Sigma = RSS^TR^T$ which is itself just an instance of the default eigendecomposition $\Sigma = Q\Delta Q^T$ with eigenvectors $Q$ (rotations) and a diagonal matrix of eigenvalues $\Delta$ (scaling). Lastly, since $S$ is a diagonal matrix, $SS^T=S^2=\Delta$.
+
+The scaling matrix can now be decomposed into three scaling values $[s_1, s_2, s_3]$ which are the roots of the eigenvalues of $\Sigma$. Also, the rotational matrix can be further decomposed into four values $[w, x, y, z]$ called \textit{quaternions}, a concept originating from aviation, in the following way:$$R = \begin{bmatrix} 1 - 2(y^2 + z^2) & 2(xy - wz) & 2(xz + wy) \\ 2(xy + wz) & 1 - 2(x^2 + z^2) & 2(yz - wx) \\ 2(xz - wy) & 2(yz + wx) & 1 - 2(x^2 + y^2) \end{bmatrix}$$
+
+With the covariance matrix fully decomposed into two smaller components, 3DGS only ever stores these seven values for each 3D Gaussian and treats each component separately in the backpropagation process. A new covariance matrix can be constructed from both components which is guaranteed to be positive semi-definite and thus geometrically valid since an eigendecomposition is always positive semi-definite.
