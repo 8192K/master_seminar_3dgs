@@ -26,27 +26,31 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 \section{Motivation for 3D Gaussian Splatting}
 \input{chapters/ch_02}
 
-\section{The 3D Gaussian Data Structure}
+\section{3D Gaussian Data Structure}
 \input{chapters/ch_03}
 
 %What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
 
 \section{Training Procedure}
-\subsection{Differentiable Tile-Based Rasterization (Forward Pass)}
-\label{ch:rasterizer}
-\subsection{Gradient Flow Through the Renderer (Backward Pass)}
-\subsection{Adaptive Density Control}
+\input{chapters/ch_04_1}
+
+\input{chapters/ch_04_2}
+
+\input{chapters/ch_04_3}
 
 \section{Novel-View Synthesis}
+Once the scene has been trained as described in the previous chapter, we can perform one forward pass with the camera matrices of the novel view to synthesize a new image.
 
 \section{Improvements}
+\label{ch:improvements}
 \begin{itemize}
     \item Aliasing
     \item Flickering
-    \item Compression, Cookbooks
+    \item Compression, Codebooks
     \item other distributions (beta)
     \item Transparency
     \item optimizations for flat sufaces
+    \item better initialization
 \end{itemize}
 
 \section{Applications and Use Cases }
