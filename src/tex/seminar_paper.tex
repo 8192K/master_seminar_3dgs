@@ -12,6 +12,19 @@
 \usepackage{fnpct}
 \usepackage{subcaption}
 
+\RedeclareSectionCommand[
+  beforeskip=0pt,
+  afterskip=-1sp % A trick to keep it run-in with exactly zero extra space
+]{subparagraph}
+
+\renewcommand{\sectioncatchphraseformat}[4]{%
+  \Ifstr{#1}{subparagraph}{%
+    \hskip #2\makebox[1.5cm][l]{#3#4}%
+  }{%
+    \hskip #2#3#4%
+  }%
+}
+
 \title{Seminar: Artificial Intelligence - Visual Computing\\3D Gaussian Splatting}
 \author{Sebastian Frehmel}
 
@@ -27,6 +40,7 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 \input{chapters/ch_02}
 
 \section{3D Gaussian Data Structure}
+\label{ch:gaussian}
 \input{chapters/ch_03}
 
 %What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
@@ -39,7 +53,7 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 \input{chapters/ch_04_3}
 
 \section{Novel-View Synthesis}
-Once the scene has been trained as described in the previous chapter, we can perform one forward pass with the camera matrices of the novel view to synthesize a new image.
+Once the scene has been trained as per the previous chapter, we can use the camera matrices of a novel view and execute the existing forward pass to synthesize a new image.
 
 \section{Improvements}
 \label{ch:improvements}

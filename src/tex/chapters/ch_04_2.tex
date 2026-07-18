@@ -1,15 +1,31 @@
 \subsection{Forward Pass}
 \label{ch:forwardpass}
-At the beginning of each forward pass the algorithm selects an input image and its camera matrices (see chapter \ref{ch:matrix_decomp}) at random. Each forward pass and subsequent backward pass will only deal with one and the same input image.
+At the beginning of each forward pass the algorithm selects an input image and its camera matrices (see chapter \ref{ch:matrix_decomp}) at random. Each forward pass and subsequent backward pass only deal with one and the same input image.
 
-In principle the forward pass is performing the splatting operation of all 3D Gaussians in the scene to produce a new image. This image will then be evaluated against the original input image using a loss function which the backpropagation step takes as input.
+In principle the forward pass is performing the splatting operation of all 3D Gaussians in the scene to produce a new image.
 
-\subsubsection{Phase 1}
+\subsubsection{Phases}
+A forward pass is divided into five phases. For every phase we are tracking all five types of attributes (position, opacity, scale, rotation, color). We are skipping spherical harmonics in color tracking due to its complexity which is outside of the scope of this paper.
 
-\subsubsection{Phase 2}
+Forward and backward passes both make heavy use of a CUDA-based GPU. In the forward pass, the GPU is running one thread per 3D Gaussian for phases 1 to 4, waits for all threads to finish, performs a global radix sort and switches to running one thread per pixel of the output image for phase 5.
+For details about the internal workings of modern GPGPUs and related frameworks like Nvidia CUDA see \cite{oden2026APC}.
 
-\subsubsection{Phase 3}
+\paragraph{Phase 1: Converting to Physical Space} Scale, rotation and opacity values are available in the so-called \textit{latent space} used for raw, unconstrained values that the optimizer calculated in the previous step of the backward pass. The color value is retrieved and the position is always fully unconstrained. This means we convert raw scale values to valid ones using the exponential function, normalize the quaternion and bound the opacity to $[0,1]$ using the sigmoid function:
+ $$s = e^{s_{raw}},\hspace{1cm} q = \frac{q_{raw}}{\vert{}\vert{}q_{raw}\vert{}\vert{}},\hspace{1cm} o = \frac{1}{1 + e^{-o_{raw}}}$$
+This shows why the algorithm had to invert the initial values after initialization.
+\subparagraph{Result} 3D Gaussian attributes are available in physical space.
 
-\subsubsection{Phase 4}
+\paragraph{Phase 2: 3D Assembly} The algorithm rebuilds the 3D covariance matrix according to chapter \ref{ch:matrix_decomp} by creating the scaling matrix $S$ from $s$ and rotational matrix $R$ from $q$, calculating $\Sigma_{3D} = R S S^T R^T = R S^2 R^T$.
+\subparagraph{Result} The 3D Gaussian covariance matrices $\Sigma_{3D}$ are available.
 
-\subsubsection{Phase 5}
+\paragraph{Phase 3: Camera Projection} This is where the splatting happens converting 3D Gaussians (ellipsoids) in worldspace into 2D Gaussians (ellipses) in image space. As applying standard pinhole projection is non-linear and would result in non-elliptic shapes for the 2D Gaussian, Zwicker et al \cite{zwickerEWAVolumeSplatting2001} introduced an \textit{affine approximation} of this projection which is linear and preserves the symmetrical properties of an ellipse. This first-order linear approximation of a non-linear multivariate function is the $2\times 3$ Jacobian matrix $J$. For that we move the center of a 3D Gaussian {$\mu$} into viewspace by multiplying with the $3\times 3$ rotational submatrix $W_{rot}$ of the extrinsic camera matrix (see chapter \ref{ch:init}) ($t=W_{rot}\cdot\mu$) and apply standard pinhole projection to it with focal lengths $f_x$ and $f_y$:$$u_x = f_x \frac{t_x}{t_z}, \hspace{0.5cm} u_y = f_y \frac{t_y}{t_z},\hspace{0.5cm}\text{resulting in}\hspace{0.5cm} J = \begin{bmatrix} \frac{\partial u_x}{\partial t_x} & \frac{\partial u_x}{\partial t_y} & \frac{\partial u_x}{\partial t_z} \\ \frac{\partial u_y}{\partial t_x} & \frac{\partial u_y}{\partial t_y} & \frac{\partial u_y}{\partial t_z} \end{bmatrix} = \begin{bmatrix} \frac{f_x}{t_z} & 0 & -f_x \frac{t_x}{t_z^2} \\ 0 & \frac{f_y}{t_z} & -f_y \frac{t_y}{t_z^2} \end{bmatrix}$$
+yielding $\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^T J^T$ with $\Sigma_{2D}$ a $2\times 2$ matrix. The inner matrix product $W_{rot} \Sigma_{3D} W_{rot}^T$ moves the 3D covariance matrix into viewspace and the outer multiplication by the Jacobian $J$ then transforms the 3D Gaussian ellipsoid into a 2D Gaussian ellipse. The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T$. Color and opacity are not affected in this phase. In fact, the formula for opacity distribution is still the same as for three dimensions (see chapter \ref{ch:gaussian}).
+\subparagraph{Result} Each 3D Gaussian has been converted into a 2D Gaussian.
+
+\paragraph{Phase 4: Calculating Inverse 2D Covariance Matrix} We are now in 2D image space.
+
+\paragraph{Preparing Phase 5: Global Radix Sort} A text
+
+\paragraph{Phase 5: Alpha Compositing} A text
+
+\subsubsection{GPU Integration}
