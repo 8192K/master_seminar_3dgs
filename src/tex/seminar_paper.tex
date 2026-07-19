@@ -14,16 +14,16 @@
 
 \RedeclareSectionCommand[
   beforeskip=0pt,
-  afterskip=-1sp % A trick to keep it run-in with exactly zero extra space
+  %afterskip=-1sp % A trick to keep it run-in with exactly zero extra space
 ]{subparagraph}
 
-\renewcommand{\sectioncatchphraseformat}[4]{%
-  \Ifstr{#1}{subparagraph}{%
-    \hskip #2\makebox[1.5cm][l]{#3#4}%
-  }{%
-    \hskip #2#3#4%
-  }%
-}
+%\renewcommand{\sectioncatchphraseformat}[4]{%
+%  \Ifstr{#1}{subparagraph}{%
+%    \hskip #2\makebox[1.5cm][l]{#3#4}%
+%  }{%
+%    \hskip #2#3#4%
+%  }%
+%}
 
 \title{Seminar: Artificial Intelligence - Visual Computing\\3D Gaussian Splatting}
 \author{Sebastian Frehmel}
