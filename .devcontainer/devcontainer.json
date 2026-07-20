@@ -7,7 +7,7 @@
     "vscode": {
       "settings": {
         "latex-workshop.view.pdf.viewer": "tab",
-        "latex-workshop.latex.autoBuild.run": "onFileChange",
+        "latex-workshop.latex.autoBuild.run": "onSave",
         "python.defaultInterpreterPath": "/home/sebastian/.local/share/mamba/envs/dev-env/bin/python3.14",
         "editor.inlineSuggest.enabled": false,
         "editor.inlineSuggest.minShowDelay": 1000

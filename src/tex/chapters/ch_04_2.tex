@@ -40,7 +40,9 @@ For the actual splatting we need to have a sorted list of all 2D Gaussians per t
 \subparagraph{Result} A list of 2D Gaussians sorted by depth (closest first) for every $16\times 16$ tile.
 
 \paragraph{Phase 5: Tile-Based Rasterization} We are now in 2D image space. Using the sorted list of Gaussian information we implicitly performed frustum culling with each view frustum having a view plane which is a tile of $16\times 16$ pixels. The algorithm now splats all 2D Gaussians in a tile from closest to farthest onto the view plane adding to the pixel colors.
-As the sorted list is per-tile, some 2D Gaussians will not be considered for certain pixels. This slight redundancy far outweighs the massive speed ups originating from perfectly mapping the 256 pixels to threads in a GPU thread block \cite{kerbl3DGaussianSplatting2023} which has the same size. This means each thread in the thread block calculates the color of one pixel. The process calculating the color of a pixel from a sorted list of colored and transparent objects is called \textit{Alpha Compositing} and well-known \cite{porterCompositingDigitalImages1984} \cite{maxOpticalModelsDirect1995} and also used by NeRFs \cite{mildenhallNeRFRepresentingScenes2020}.
+As the sorted list is per-tile, some 2D Gaussians will not be considered for certain pixels. This slight redundancy far outweighs the massive speed ups originating from perfectly mapping the 256 pixels to threads in a GPU thread block \cite{kerbl3DGaussianSplatting2023} which has the same size. This means each thread in the thread block calculates the color of one pixel. 
+
+The process calculating the color of a pixel from a sorted list of colored and transparent objects is called \textit{Alpha Compositing} and well-known \cite{porterCompositingDigitalImages1984} \cite{maxOpticalModelsDirect1995} and also used by NeRFs \cite{mildenhallNeRFRepresentingScenes2020}.
 
 The color $C_p$ of a pixel according to alpha compositing is $$C_p = \sum_{i=1}^{N} c_i \alpha_i T_i, \hspace{0.5cm}\text{with}\hspace{0.5cm} T_i = \prod_{j=1}^{i-1} (1 - \alpha_j) \hspace{0.5cm}\text{the transmittance,}$$
 $c_i$ the color of the 2D Gaussian,

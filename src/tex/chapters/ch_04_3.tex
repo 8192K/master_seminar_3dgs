@@ -1,24 +1,29 @@
-\subsection{Backpropagation}
+\subsection{Backward Pass}
 \label{ch:backprop}
+During backpropagation the loss from comparing the rendered image resulting from the previous forward pass with the original input image is passed backwards from the image through to 2D Gaussians and finally the 3D Gaussians, modifying their attributes, in general similar to neural networks \cite{thimm2025ML}.
+If the loss is small enough or the algorithm has reached a maximum number of iterations (usually around 30.000 \cite{kerbl3DGaussianSplatting2023}), backward pass and training algorithm terminate, returning the final reconstructed 3D scene.
+
 \subsubsection{Loss Function}
+Kerbl at al \cite{kerbl3DGaussianSplatting2023} use a weighted combination of regular $\mathcal{L}_1$ loss and \textit{D-SSIM} (a Structural Similarity Index \cite{bakerDSSIMStructuralSimilarity2023}):
+$\mathcal{L}_{\text{3DGS}} = (1 - \lambda) \cdot \mathcal{L}_1 + \lambda \cdot \mathcal{L}_\text{D-SSIM}$, with $\lambda=0.2$. While $\mathcal{L}_1$ calculates the absolute error as the mean distance between color values of corresponding pixels, D-SSIM among others looks at the features and contrast surrounding these pixels.
 
 \subsubsection{Phases}
-A backward is divided into five phases which directly mirror the five forward pass phases.
+A backward pass is divided into five phases. On the GPU, phases 1 to 3 are running with one thread per pixel while phases 4 and 5 are running with one thread per Gaussian.
 
-\paragraph{Phase 1} A text
+Also, the algorithm stored each component used during alpha compositing in the previous forward pass (the \textit{computational graph}) and the sorted list of tile IDs and depths.
 
-\paragraph{Phase 2} A text
+\paragraph{Phase 1: Loss to Pixel Color Change} Let $C_p$ be the pixel color at pixel $p$ of the rendered image with components $[R, G, B]$ and $\hat{C_p}$ with $[\hat{R}, \hat{G}, \hat{B}]$ the analogue for the input image. Then the $\mathcal{L}_1$ loss function for this specific pixel is $\mathcal{L}_1 = \vert{}R - \hat{R}\vert{} + \vert{}G - \hat{G}\vert{} + \vert{}B - \hat{B}\vert{}$. Ignoring $\mathcal{L}_{\text{D-SSIM}}$ for the moment, with the derivative of the absolute value function $\vert x \vert$, the first gradient in the gradient pipeline the algorithm calculates is $\frac{\partial L}{\partial C_p} \in \{+1,0,-1\}^3$. This $3\times 1$ vector denotes the required color change per pixel in the RGB components with $+1$ meaning the error in the corresponding color component being too high and likewise for the other values. This vector is the initial \textit{pressure} in the gradient pipeline.
+\subparagraph{Result} The gradient contains directions indicating how to change pixel RGB values.
 
-\paragraph{Phase 3} A text
+\paragraph{Phase 2: Pixel Color Change to 2D Splat} We need to translate the instruction which color components to change into
 
-\paragraph{Phase 4} A text
+\paragraph{Phase 3: 2D Splat to 2D Gaussian} A text
 
-\paragraph{Phase 5} A text
+\paragraph{Phase 4: 2D Gaussian to 3D Gaussian} A text
+
+\paragraph{Phase 5: 3D Gaussian to Attributes} A text
+$$\frac{\partial L}{\partial S} = \underbrace{\frac{\partial L}{\partial C_p}}_{\text{Loss}} \cdot \underbrace{\frac{\partial C_p}{\partial \alpha_i}}_{\text{Alpha Blend}} \cdot \underbrace{\frac{\partial \alpha_i}{\partial \Sigma_{2D}}}_{\text{2D Splat}} \cdot \underbrace{\frac{\partial \Sigma_{2D}}{\partial \Sigma_{3D}}}_{\text{Projection}} \cdot \underbrace{\frac{\partial \Sigma_{3D}}{\partial S}}_{\text{Decomposition}}$$
 
 \subsubsection{Adaptive Density Control}
 \label{ch:density_control}
 Test
-
-\subsubsection{GPU Integration}
-
-\subsection{Convergence Criteria}
