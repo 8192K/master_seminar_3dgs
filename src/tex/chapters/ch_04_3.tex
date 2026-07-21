@@ -14,8 +14,7 @@ Also, the algorithm still has access to the per-tile lists of 2D Gaussians sorte
 
 \paragraph{Phase 1: Loss to Pixel Color Correction} The derivative of $\mathcal{L}_1=\frac{1}{N}\sum_{\text{p=1}}^{N}{\vert{}C_p-I_p\vert{}}$ at a specific pixel $p$ is $\frac{\partial \mathcal{L}_1}{\partial C_p} = \frac{1}{N} \cdot \text{sign}(C_p-I_p)$ with $C$ the rendered image, $I$ the input image.
 %The derivate of $\mathcal{L}_{\text{D-SSIM}}$ is far too complex for this paper and we'll skip it deliberately.
-\vspace{-8pt}
-$$
+\begin{flalign*}
 \text{Then the full gradient for $L$ is} \hspace{3mm} 
 \frac{\partial L}{\partial C_p} = 
 \frac{1-\lambda}{N} 
@@ -30,46 +29,118 @@ $$
     \frac{\partial \mathcal{L}_{\text{D-SSIM}}}{\partial G_p} \\
     \frac{\partial \mathcal{L}_{\text{D-SSIM}}}{\partial B_p}
 \end{bmatrix}
-\in \mathbb{R}^3
-\vspace{-4pt}
-$$
+\in \mathbb{R}^3. &&
+\end{flalign*}
 While $\mathcal{L}_1$ provides a direction for color alignment, D-SSIM acts as a structural regularizer.
-\subparagraph{Result} The gradient holds the required color correction per pixel. A positive color component gradient indicates an overestimation, vice-versa for negative values and $0$ requires no change. The magnitude dictates the degree of adjustment required.
+\subparagraph{Result} The gradient holds the required color correction per pixel. A positive color component gradient indicates an overestimation, vice-versa for negative values and $0$ requires no change. The magnitude dictates the degree of adjustment required.\newpage
 
-\paragraph{Phase 2: Pixel Color Correction to 2D Splat} In this phase we need to work alpha compositing backwards ($C_p = \sum_{i=1}^{N} c_i \alpha_i T_i$, with $T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)$, see phase 5 of the forward pass), meaning the $\frac{\partial L}{\partial C_p}$ gradient flows into into opacity $\alpha_i$ and color $c_i$ for each 2D Gaussian in the sorted list for this tile from closest to farthest. 
-$$
+\paragraph{Phase 2: Pixel Color Correction to 2D Splat} In this phase we need to work alpha compositing backwards ($C_p = \sum_{i=1}^{N} c_i \alpha_i T_i$, with $T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)$, see phase 5 of the forward pass), meaning the $\frac{\partial L}{\partial C_p}$ gradient flows into into the \textit{evaluated} opacity $\alpha_i$ at pixel $p$ and color $c_i$ for each 2D Gaussian in the sorted list for this tile from closest to farthest. 
+\begin{flalign*}
 \text{Using the chain rule, for color this is} \hspace{0.4cm}
 \frac{\partial L}{\partial c_i} = 
-\frac{\partial L}{\partial C_p} 
-\cdot 
-\frac{\partial C_p}{\partial c_i} = 
-\frac{\partial L}{\partial C_p} 
-\cdot 
-(\alpha_i T_i) 
-\in \mathbb{R}^3
-$$
-$$
-\text{and for opacity at pixel $p$} \hspace{0.4cm} 
+\frac{\partial L}{\partial C_p} \cdot \frac{\partial C_p}{\partial c_i} = 
+\frac{\partial L}{\partial C_p} \cdot (\alpha_i T_i) 
+\in \mathbb{R}^3 &&
+\end{flalign*}
+\begin{flalign*}
+\text{and for evaluated opacity at pixel $p$} \hspace{0.4cm} 
 \frac{\partial L}{\partial \alpha_i} = 
-\frac{\partial L}{\partial C_p} 
-\cdot 
-\frac{\partial C_p}{\partial \alpha_i} = 
-\frac{\partial L}{\partial C_p}
-\cdot
-T_i (c_i - C_{behind})
-\in \mathbb{R}
+\frac{\partial L}{\partial C_p} \cdot \frac{\partial C_p}{\partial \alpha_i} = 
+\frac{\partial L}{\partial C_p} \cdot T_i (c_i - C_{behind})
+\in \mathbb{R}. &&
+\end{flalign*}
+with $C_{behind}$ being the accumulated color of everything behind 2D Gaussian $i$. Conceptually, this gradient increases evaluated opacity $\alpha_i$ if the 2D Gaussian's color $c_i$ reduces the pixel error more effectively than the accumulated color of the geometry behind it ($C_{behind}$). Conversely, if the geometry behind it is more accurate, the gradient decreases $\alpha_i$ to let the background geometry show through.
+
+If the 2D Gaussian spans multiple pixels, the GPU adds all gradients of a type atomically into an aggregated gradient: e.g. $\text{Total } \frac{\partial L}{\partial \alpha_i} = \sum_{p \in \text{Pixels}} \left( \frac{\partial L}{\partial \alpha_i} \text{ for pixel } p \right)$.
+\subparagraph{Result} Gradients for color and evaluated opacity exist for every 2D Gaussian.
+
+\paragraph{Phase 3: 2D Splat to 2D Geometry} The gradient for \textit{evaluated} opacity $\alpha_i$ now flows into the the physical properties of a 2D Gaussian: the actual base opacity $o$, position $\mu_{2D}$ and 2D covariance matrix $\Sigma_{2D}$ adjusting 2D geometry by moving and changing shape. For this we recall the opacity distribution $\alpha_i(p) = o \cdot \exp\left(-\frac{1}{2}\Delta p^T \Sigma^{-1}_{2D}\Delta p\right)$ with $\Delta = p - \mu_{2D}$ or simplified with $E$ denoting the exponent: $\alpha_i(p) = o \cdot e^E$.
+\begin{flalign*}
+\text{For the base opacity, the derivative is simple:} \hspace{3mm}
+\frac{\partial L}{\partial o} =
+\frac{\partial L}{\partial \alpha_i} \cdot \frac{\partial \alpha_i}{\partial o} =
+\frac{\partial L}{\partial \alpha_i} \cdot e^E
+\in \mathbb{R}. &&
+\end{flalign*}
+$e^E$ represents how far the pixel is away from the center of the 2D Gaussian. If the pixel is close to the center, the algorithm increases the base opacity gradient. 
+
+For $\mu_{2D}$ we want to know how the opacity at pixel $p$ changes when we move it:
 $$
-with $C_{behind}$ being the accumulated color of everything behind 2D Gaussian $i$. Conceptually, this gradient increases opacity $\alpha_i$ if the 2D Gaussian's color $c_i$ reduces the pixel error more effectively than the accumulated color of the geometry behind it ($C_{behind}$). Conversely, if the geometry behind it is more accurate, the gradient decreases $\alpha_i$ to let the background geometry show through.
+\frac{\partial \alpha_i}{\partial \mu_{2D}} = o \cdot e^E \cdot \frac{\partial E}{\partial \mu_{2D}} = 
+\alpha_i(p) \cdot v
+, \hspace{4.4mm}
+v = \Sigma_{2D}^{-1} \Delta p
+, \hspace{4.4mm}
+\frac{\partial L}{\partial \mu_{2D}} =
+\frac{\partial L}{\partial \alpha_i} \cdot \frac{\partial \alpha_i}{\partial \mu_{2D}} =
+\frac{\partial L}{\partial \alpha_i} \cdot \alpha_i(p) \cdot v
+\in \mathbb{R}^2
+$$
+$v$ is a vector pointing directly from the 2D Gaussian's center to the pixel. If the evaluated opacity gradient is positive, the center is effectively pulled towards the pixel.
 
-If a 2D Gaussian spans multiple pixels, the GPU adds the gradients atomically.
-\subparagraph{Result} Gradients for color and opacity at pixel $p$ exist for every 2D Gaussian.
+For $\Sigma_{2D}$ we want to know how the opacity at pixel $p$ changes when the shape changes:
+$$
+\frac{\partial L}{\partial \Sigma_{2D}} = 
+\frac{\partial L}{\partial \alpha_i} \cdot \frac{\partial \alpha_i}{\partial \Sigma_{2D}} = 
+\frac{\partial L}{\partial \alpha_i} \cdot \frac{1}{2} \alpha_i(p) \cdot \left( v \cdot v^T \right)
+\in \mathbb{R}^{2\times 2}
+$$
+Calculating $\frac{\partial \alpha_i}{\partial \Sigma_{2D}}$ is too complex to show in this paper. Again we have the vector $v$ multiplied by its own transpose which results in a matrix gradient making the 2D Gaussian stretch itself towards the pixel if the evaluated opacity gradient is positive, or else contract.
 
-\paragraph{Phase 3: 2D Splat to 2D Gaussian} Next:? we deconstruct alpha to get to position and 2D covariance matrix ?
+Aggregate gradients are calculated like in phase 2.
+\subparagraph{Result} The 2D geometry is complete. All physical properties of a 2D Gaussian have been modified in one step across all pixels the 2D Gaussian touches.
 
-\paragraph{Phase 4: 2D Gaussian to 3D Gaussian} A text
+\newpage
 
-\paragraph{Phase 5: 3D Gaussian to Attributes} A text
-$$\frac{\partial L}{\partial S} = \underbrace{\frac{\partial L}{\partial C_p}}_{\text{Loss}} \cdot \underbrace{\frac{\partial C_p}{\partial \alpha_i}}_{\text{Alpha Blend}} \cdot \underbrace{\frac{\partial \alpha_i}{\partial \Sigma_{2D}}}_{\text{2D Splat}} \cdot \underbrace{\frac{\partial \Sigma_{2D}}{\partial \Sigma_{3D}}}_{\text{Projection}} \cdot \underbrace{\frac{\partial \Sigma_{3D}}{\partial S}}_{\text{Decomposition}}$$
+\paragraph{Phase 4: 2D Geometry to 3D Geometry} The GPU model changes to running per-Gaussian. In this phase the algorithm \textit{un-projects} the 2D Gaussian to the original 3D Gaussian. We recall the camera projection $\Sigma_{2D} = U \Sigma_{3D} U^T$ with $U = J W_{rot}$, $J$ and $W_{rot}$ as per the forward pass, $t \in \mathbb{R}^3$ the viewspace position of the 3D Gaussian, $\frac{\partial \mu_{2D}}{\partial t} = J$ and $\frac{\partial t}{\partial \mu_{3D}} = W_{rot}$. First we un-project from image space to viewspace using the multi-variable chain rule, then in the same manner from viewspace to worldspace, first for $\mu_{2D}$ to $\mu_{3D}$:
+\vspace{-6pt}
+\begin{flalign*}
+\text{Viewspace:} \hspace{6.5mm}
+\frac{\partial L}{\partial t} =
+\left( \frac{\partial \mu_{2D}}{\partial t} \right)^T \frac{\partial L}{\partial \mu_{2D}} =
+J^T \frac{\partial L}{\partial \mu_{2D}}
+\in \mathbb{R}^3 &&
+\end{flalign*}
+\vspace{-14pt}
+\begin{flalign*}
+\text{Worldspace:} \hspace{5mm}
+\frac{\partial L}{\partial \mu_{3D}} =
+\left( \frac{\partial t}{\partial \mu_{3D}} \right)^T \frac{\partial L}{\partial t} =
+W_{rot}^T \frac{\partial L}{\partial t} =
+W_{rot}^T J^T \frac{\partial L}{\partial \mu_{2D}} =
+U^T \left( \frac{\partial L}{\partial \mu_{2D}} \right)
+\in \mathbb{R}^3 &&
+\end{flalign*}
+Deriving the same for $\Sigma_{2D}$ to $\Sigma_{3D}$ is out of scope of this paper as it would be too lengthy.
+\vspace{-12pt}
+\begin{flalign*}
+\text{However, the final gradient is very clean:} \hspace{5mm}
+\frac{\partial L}{\partial \Sigma_{3D}} = U^T \left( \frac{\partial L}{\partial \Sigma_{2D}} \right) U &&
+%\vspace{-8pt}
+\end{flalign*}
+The unprojections seem intuitive, using the transposes of the forward projection matrices.
+\subparagraph{Result} The algorithm has adjusted the position and shape of the 3D Gaussian.
+
+\paragraph{Phase 5: 3D Geometry to 3D Gaussian Attributes} In the last phase the algorithm flows the $\frac{\partial L}{\partial \Sigma_{3D}}$ gradient through the 3D covariance matrix assembly into the raw constituent attributes $s_{raw}$ for the scaling matrix $S$ and quaternion $q_{raw}$ for the rotational matrix~$R$.
+The exact math behind is again out of scope, so we list the major steps. $\Sigma_{3D} = R S S^T R^T = M M^T$ with $M = RS$. First we calculate $\frac{\partial L}{\partial M} = 2 \left( \frac{\partial L}{\partial \Sigma_{3D}} \right) M \in \mathbb{R}^{3\times 3}$ and split this into $\frac{\partial L}{\partial S} = R^T \left( \frac{\partial L}{\partial M} \right)$ for scale and $\frac{\partial L}{\partial R} = \left( \frac{\partial L}{\partial M} \right) S$ for rotation.
+By extracting the diagonal from $\frac{\partial L}{\partial S}$ we get $\frac{\partial L}{\partial s} \in \mathbb{R}^{+3}$. For the rotation we calculate the partial derivatives of $R$ (chapter~\ref{ch:matrix_decomp}) of each of the four components and aggregate those results into $\frac{\partial L}{\partial q} \in \mathbb{R}^4$.
+
+Finally, we have to backpropagate through activation function $\exp$ for $s_{raw}$ (but $e^{s_{raw}}=s$) and the normalization function for $q_{raw}$ with $s$ and $q$ saved in the forward pass:
+$$
+\frac{\partial L}{\partial s_{raw}} = \frac{\partial L}{\partial s} \cdot s
+, \hspace{5mm}
+\frac{\partial L}{\partial q_{raw}} = J_{norm}^T \frac{\partial L}{\partial q}
+\hspace{3mm} \text{with} \hspace{3mm}
+J_{norm} = \frac{1}{\vert{}\vert{}q_{raw}\vert{}\vert{}} \left( I - q q^T \right)
+$$
+\subparagraph{Result} All gradients have been calculated, the backward pass is done.
+
+\subsubsection{Optimization Step}
+Where regular gradient descent would simply calculate \texttt{new\_value = old\_value - \\(learning\_rate * gradient)}\cite{thimm2025ML}, 3DGS uses the \textit{Adam} optimizer (Adaptive Moment Estimation) \cite{kingma2015iclr-adam} which keeps a history on every parameter and calculates momentum $m_t$ and variance $v_t$, weighing the newest gradient against the ones before, e.g. $m_t = \beta_1 m_{t-1} + (1 - \beta_1) \cdot new\_gradient$, $\beta$ the weight. With learning rate $\eta$, $\text{Step} = \eta \cdot \frac{m_t}{\sqrt{v_t} + \epsilon}$. There are different learning rates per parameter. Smoothing out over momentum and variance of the past iterations, using this optimizer ensures that all 3D Gaussians gently vibrate and morph into their correct geometric shapes, positions, colors and opacities.
+
+Adam will calculate new values in latent space for all five attribute types of a 3D Gaussian even though only scale and rotation gradients flowed all the way into phase 5.
+\enlargethispage{\baselineskip}
+\newpage
 
 \subsubsection{Adaptive Density Control}
 \label{ch:density_control}

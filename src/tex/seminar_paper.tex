@@ -33,7 +33,7 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 
 \begin{document}
 \maketitle
-\section{Introduction to 3D Reconstruction}
+\section{Introduction to the Field of 3D Reconstruction}
 \input{chapters/ch_01}
 
 \section{Motivation for 3D Gaussian Splatting}
@@ -45,7 +45,7 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 
 %What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
 
-\section{Training Procedure}
+\section{3D Reconstruction Training Procedure}
 \input{chapters/ch_04_1}
 
 \input{chapters/ch_04_2}
@@ -73,8 +73,6 @@ Once the scene has been trained as per the previous chapter, we can use the came
 
 \section{Conclusion \& Future Developments}
 
-\newpage
-
 %IDEA: Make one graphics page with 8 to 10 subfigures to save space.
 \begin{figure}[htbp!]
     \centering
@@ -88,9 +86,10 @@ Once the scene has been trained as per the previous chapter, we can use the came
     \begin{subfigure}{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/view_frustum.pdf}
-        \caption{Another view frustum}
+        \caption{Gaussians}
         \label{fig:gaussians}
     \end{subfigure}
+    \caption{Images}
 \end{figure}
 
 \newpage

@@ -19,12 +19,42 @@ It then rebuilds the 3D covariance matrix according to chapter \ref{ch:matrix_de
 
 \paragraph{Phase 2: Projection from 3D to 2D} We convert 3D Gaussians (ellipsoids) in worldspace into 2D Gaussians (ellipses) in image space using camera projection. 
 As applying standard pinhole projection is non-linear and would result in non-elliptic shapes for the 2D Gaussian, Zwicker et al \cite{zwickerEWAVolumeSplatting2001} introduced an \textit{affine approximation} of this projection which is linear and preserves the symmetrical properties of an ellipse.
-This first-order linear approximation of a non-linear multivariate function is the $2\times 3$ Jacobian matrix $J$. For that we move the center of a 3D Gaussian {$\mu$} into viewspace by multiplying with the $3\times 3$ rotational submatrix $W_{rot}$ of the extrinsic camera matrix (see chapter \ref{ch:init}) ($t=W_{rot}\cdot\mu$) and apply standard pinhole projection to it with focal lengths $f_x$ and $f_y$:$$u_x = f_x \frac{t_x}{t_z}, \hspace{0.5cm} u_y = f_y \frac{t_y}{t_z},\hspace{0.5cm}\text{resulting in}\hspace{0.5cm} J = \begin{bmatrix} \frac{\partial u_x}{\partial t_x} & \frac{\partial u_x}{\partial t_y} & \frac{\partial u_x}{\partial t_z} \\ \frac{\partial u_y}{\partial t_x} & \frac{\partial u_y}{\partial t_y} & \frac{\partial u_y}{\partial t_z} \end{bmatrix} = \begin{bmatrix} \frac{f_x}{t_z} & 0 & -f_x \frac{t_x}{t_z^2} \\ 0 & \frac{f_y}{t_z} & -f_y \frac{t_y}{t_z^2} \end{bmatrix}$$
+This first-order linear approximation of a non-linear multivariate function is the $2\times 3$ Jacobian matrix $J$. For that we move the center of a 3D Gaussian {$\mu$} into viewspace by multiplying with the $3\times 3$ rotational submatrix $W_{rot}$ of the extrinsic camera matrix (see chapter \ref{ch:init}) ($t=W_{rot}\cdot\mu$) and apply standard pinhole projection to it with focal lengths $f_x$ and $f_y$:
+$$
+u_x = f_x \frac{t_x}{t_z}, \hspace{0.5cm}
+u_y = f_y \frac{t_y}{t_z}, \hspace{0.5cm}
+\text{resulting in} \hspace{0.5cm} 
+J = \begin{bmatrix} 
+    \frac{\partial u_x}{\partial t_x} & \frac{\partial u_x}{\partial t_y} & \frac{\partial u_x}{\partial t_z} \\
+    \frac{\partial u_y}{\partial t_x} & \frac{\partial u_y}{\partial t_y} & \frac{\partial u_y}{\partial t_z}
+\end{bmatrix} = 
+\begin{bmatrix} 
+    \frac{f_x}{t_z} & 0 & -f_x \frac{t_x}{t_z^2} \\
+    0 & \frac{f_y}{t_z} & -f_y \frac{t_y}{t_z^2}
+\end{bmatrix}
+$$
 yielding $\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^T J^T$ with $\Sigma_{2D}$ a $2\times 2$ matrix. The inner matrix product $W_{rot} \Sigma_{3D} W_{rot}^T$ moves the 3D covariance matrix into viewspace and the outer multiplication by the Jacobian $J$ then transforms the 3D Gaussian ellipsoid into a 2D Gaussian ellipse.
-The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T$. Color and opacity are not affected in this phase. In fact, the dimension-agnostic formula for opacity distribution (see chapter \ref{ch:gaussian}) is still valid in two dimensions : $ \alpha(p) = o \cdot \exp\left(-\frac{1}{2}(p - \mu_{2D})^T \Sigma^{-1}_{2D}(p - \mu_{2D})\right)$.
+The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T$. Color and opacity are not affected in this phase. In fact, the dimension-agnostic formula for opacity distribution (see chapter \ref{ch:gaussian}) is still valid in two dimensions : $\alpha(p) = o \cdot \exp\left(-\frac{1}{2}(p - \mu_{2D})^T \Sigma^{-1}_{2D}(p - \mu_{2D})\right)$.
 
 Consequently, the algorithm precalculates $\Sigma_{2D}^{-1}$, the inverse of the 2D covariance matrix, as only three values A, B and C in order to avoid frequent recalculation in the last phase:
-$$\Sigma_{2D} = \begin{bmatrix} \sigma_{xx} & \sigma_{xy} \\ \sigma_{xy} & \sigma_{yy} \end{bmatrix}, \hspace{0.5cm}\Sigma_{2D}^{-1} = \frac{1}{D} \begin{bmatrix} \sigma_{yy} & -\sigma_{xy} \\ -\sigma_{xy} & \sigma_{xx} \end{bmatrix} = \begin{bmatrix} A & B \\ B & C \end{bmatrix}, \hspace{0.5cm}\text{D the determinant.}$$
+$$
+\Sigma_{2D} = 
+\begin{bmatrix}
+    \sigma_{xx} & \sigma_{xy} \\
+    \sigma_{xy} & \sigma_{yy}
+\end{bmatrix}, \hspace{0.5cm}
+\Sigma_{2D}^{-1} =
+\frac{1}{D} 
+\begin{bmatrix} 
+    \sigma_{yy} & -\sigma_{xy} \\
+    -\sigma_{xy} & \sigma_{xx}
+\end{bmatrix} = 
+\begin{bmatrix}
+    A & B \\ 
+    B & C
+\end{bmatrix}, \hspace{0.5cm}
+\text{D the determinant.}
+$$
 \subparagraph{Result} Each Gaussian is defined in 3D and 2D.
 
 \paragraph{Phase 3: Preparing Radix Sort} First, the final output image will be rendered in tiles of $16\times 16$ pixels. For this we need to know how many tiles a 2D Gaussian spans which the algorithms achieves by calculating a 2D bounding box for a 2D Gaussian.
