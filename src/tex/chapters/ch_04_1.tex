@@ -20,7 +20,7 @@ The defacto standard concept in 3D imaging to derive these two matrices for each
 
 3DGS as originally conceived uses these points as the origins for the initial 3D Gaussians which are being initialized as perfect spheres having radii deduced from the three neigh\-boring spheres with an opacity of around $0.1$. The initial color can be any RGB value.
 
-Consequently, having to derive camera poses for initialization first adds significantly to the entire training process which is why other, faster COLMAP-free methods have been proposed, see chapter \ref{ch:improvements}. Also, Kerbl et al \cite{kerbl3DGaussianSplatting2023} mention that using random initialization of all 3D Gaussians yields good quality results despite longer training times.
+Consequently, having to derive camera poses for initialization first adds significantly to the entire training process which is why other, faster COLMAP-free methods have been proposed. Also, Kerbl et al \cite{kerbl3DGaussianSplatting2023} mention that using random initialization of all 3D Gaussians yields good quality results despite longer training times.
 
 After initialization we have correct values for opacity (o $\in [0,1]$), the quaternions $q$ are all at $[1,0,0,0]$ (no rotation), positions $\mu$ and colors $c$ are set and the scales $s$ have been initialized at multiples of $[1,1,1]$. Finally, the algorithm converts scale and opacity into \textit{latent space} by applying the natural logarithm or the logit function respectively.
 

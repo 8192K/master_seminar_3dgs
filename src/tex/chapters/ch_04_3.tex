@@ -1,23 +1,70 @@
 \subsection{Backward Pass}
 \label{ch:backprop}
-During backpropagation the loss from comparing the rendered image resulting from the previous forward pass with the original input image is passed backwards from the image through to 2D Gaussians and finally the 3D Gaussians, modifying their attributes, in general similar to neural networks \cite{thimm2025ML}.
+During backpropagation the loss from comparing the rendered image resulting from the previous forward pass with the original input image is passed backwards from the image through to 2D Gaussians and finally the 3D Gaussians, modifying their attributes, in principle similar to neural networks \cite{thimm2025ML}.
 If the loss is small enough or the algorithm has reached a maximum number of iterations (usually around 30.000 \cite{kerbl3DGaussianSplatting2023}), backward pass and training algorithm terminate, returning the final reconstructed 3D scene.
 
 \subsubsection{Loss Function}
-Kerbl at al \cite{kerbl3DGaussianSplatting2023} use a weighted combination of regular $\mathcal{L}_1$ loss and \textit{D-SSIM} (a Structural Similarity Index \cite{bakerDSSIMStructuralSimilarity2023}):
-$\mathcal{L}_{\text{3DGS}} = (1 - \lambda) \cdot \mathcal{L}_1 + \lambda \cdot \mathcal{L}_\text{D-SSIM}$, with $\lambda=0.2$. While $\mathcal{L}_1$ calculates the absolute error as the mean distance between color values of corresponding pixels, D-SSIM among others looks at the features and contrast surrounding these pixels.
+Kerbl at al \cite{kerbl3DGaussianSplatting2023} use a weighted combination of regular $\mathcal{L}_1$ loss and \textit{D-SSIM} (a Structural Similarity Index \cite{wangImageQualityAssessment2004}):
+$L = (1 - \lambda) \cdot \mathcal{L}_1 + \lambda \cdot \mathcal{L}_\text{D-SSIM}$, with $\lambda=0.2$. While $\mathcal{L}_1$ calculates the absolute error as the mean distance between color values of corresponding pixels, D-SSIM among others looks at the features and contrast surrounding these pixels.
 
 \subsubsection{Phases}
 A backward pass is divided into five phases. On the GPU, phases 1 to 3 are running with one thread per pixel while phases 4 and 5 are running with one thread per Gaussian.
 
-Also, the algorithm stored each component used during alpha compositing in the previous forward pass (the \textit{computational graph}) and the sorted list of tile IDs and depths.
+Also, the algorithm still has access to the per-tile lists of 2D Gaussians sorted by depth.
 
-\paragraph{Phase 1: Loss to Pixel Color Change} Let $C_p$ be the pixel color at pixel $p$ of the rendered image with components $[R, G, B]$ and $\hat{C_p}$ with $[\hat{R}, \hat{G}, \hat{B}]$ the analogue for the input image. Then the $\mathcal{L}_1$ loss function for this specific pixel is $\mathcal{L}_1 = \vert{}R - \hat{R}\vert{} + \vert{}G - \hat{G}\vert{} + \vert{}B - \hat{B}\vert{}$. Ignoring $\mathcal{L}_{\text{D-SSIM}}$ for the moment, with the derivative of the absolute value function $\vert x \vert$, the first gradient in the gradient pipeline the algorithm calculates is $\frac{\partial L}{\partial C_p} \in \{+1,0,-1\}^3$. This $3\times 1$ vector denotes the required color change per pixel in the RGB components with $+1$ meaning the error in the corresponding color component being too high and likewise for the other values. This vector is the initial \textit{pressure} in the gradient pipeline.
-\subparagraph{Result} The gradient contains directions indicating how to change pixel RGB values.
+\paragraph{Phase 1: Loss to Pixel Color Correction} The derivative of $\mathcal{L}_1=\frac{1}{N}\sum_{\text{p=1}}^{N}{\vert{}C_p-I_p\vert{}}$ at a specific pixel $p$ is $\frac{\partial \mathcal{L}_1}{\partial C_p} = \frac{1}{N} \cdot \text{sign}(C_p-I_p)$ with $C$ the rendered image, $I$ the input image.
+%The derivate of $\mathcal{L}_{\text{D-SSIM}}$ is far too complex for this paper and we'll skip it deliberately.
+\vspace{-8pt}
+$$
+\text{Then the full gradient for $L$ is} \hspace{3mm} 
+\frac{\partial L}{\partial C_p} = 
+\frac{1-\lambda}{N} 
+\begin{bmatrix} 
+    \text{sign}(R_p - R_{I,p}) \\
+    \text{sign}(G_p - G_{I,p}) \\
+    \text{sign}(B_p - B_{I,p})
+\end{bmatrix}
++ \lambda 
+\begin{bmatrix} 
+    \frac{\partial \mathcal{L}_{\text{D-SSIM}}}{\partial R_p} \\
+    \frac{\partial \mathcal{L}_{\text{D-SSIM}}}{\partial G_p} \\
+    \frac{\partial \mathcal{L}_{\text{D-SSIM}}}{\partial B_p}
+\end{bmatrix}
+\in \mathbb{R}^3
+\vspace{-4pt}
+$$
+While $\mathcal{L}_1$ provides a direction for color alignment, D-SSIM acts as a structural regularizer.
+\subparagraph{Result} The gradient holds the required color correction per pixel. A positive color component gradient indicates an overestimation, vice-versa for negative values and $0$ requires no change. The magnitude dictates the degree of adjustment required.
 
-\paragraph{Phase 2: Pixel Color Change to 2D Splat} We need to translate the instruction which color components to change into
+\paragraph{Phase 2: Pixel Color Correction to 2D Splat} In this phase we need to work alpha compositing backwards ($C_p = \sum_{i=1}^{N} c_i \alpha_i T_i$, with $T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)$, see phase 5 of the forward pass), meaning the $\frac{\partial L}{\partial C_p}$ gradient flows into into opacity $\alpha_i$ and color $c_i$ for each 2D Gaussian in the sorted list for this tile from closest to farthest. 
+$$
+\text{Using the chain rule, for color this is} \hspace{0.4cm}
+\frac{\partial L}{\partial c_i} = 
+\frac{\partial L}{\partial C_p} 
+\cdot 
+\frac{\partial C_p}{\partial c_i} = 
+\frac{\partial L}{\partial C_p} 
+\cdot 
+(\alpha_i T_i) 
+\in \mathbb{R}^3
+$$
+$$
+\text{and for opacity at pixel $p$} \hspace{0.4cm} 
+\frac{\partial L}{\partial \alpha_i} = 
+\frac{\partial L}{\partial C_p} 
+\cdot 
+\frac{\partial C_p}{\partial \alpha_i} = 
+\frac{\partial L}{\partial C_p}
+\cdot
+T_i (c_i - C_{behind})
+\in \mathbb{R}
+$$
+with $C_{behind}$ being the accumulated color of everything behind 2D Gaussian $i$. Conceptually, this gradient increases opacity $\alpha_i$ if the 2D Gaussian's color $c_i$ reduces the pixel error more effectively than the accumulated color of the geometry behind it ($C_{behind}$). Conversely, if the geometry behind it is more accurate, the gradient decreases $\alpha_i$ to let the background geometry show through.
 
-\paragraph{Phase 3: 2D Splat to 2D Gaussian} A text
+If a 2D Gaussian spans multiple pixels, the GPU adds the gradients atomically.
+\subparagraph{Result} Gradients for color and opacity at pixel $p$ exist for every 2D Gaussian.
+
+\paragraph{Phase 3: 2D Splat to 2D Gaussian} Next:? we deconstruct alpha to get to position and 2D covariance matrix ?
 
 \paragraph{Phase 4: 2D Gaussian to 3D Gaussian} A text
 
