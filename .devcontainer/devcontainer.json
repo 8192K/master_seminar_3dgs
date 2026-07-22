@@ -33,7 +33,8 @@
         "njqdev.vscode-python-typehint",
         "ms-python.debugpy",
         "kevinrose.vsc-python-indent",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "ltex-plus.vscode-ltex-plus"
       ]
     }
   }

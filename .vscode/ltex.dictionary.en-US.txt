@@ -1,0 +1,11 @@
+plenoptic
+Gaussians
+minorly
+NeRFs
+NeRF
+Fernuniversität
+rasterizer
+eigendecomposition
+Gaussians
+regularizer
+Frehmel

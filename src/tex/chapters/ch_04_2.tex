@@ -1,25 +1,31 @@
 \subsection{Forward Pass}
 \label{ch:forwardpass}
-At the beginning of each forward pass the algorithm selects an input image and its camera matrices (see chapter \ref{ch:matrix_decomp}) at random. Each forward pass and subsequent backward pass only deal with one and the same input image.
+At the beginning of each forward pass the algorithm selects an input image and its camera matrices (see chapter~\ref{ch:matrix_decomp}) at random. Each forward pass and subsequent backward pass only deal with one and the same input image.
 
-In principle the forward pass is performing the splatting operation of all 3D Gaussians in the scene to produce a new image.
+In principle the forward pass is performing the splatting operation of all 3D Gaussians in the scene to render a new image.
 
 \subsubsection{Phases}
-A forward pass is divided into five phases. For every phase we are tracking all five types of attributes (position, opacity, scale, rotation, color). We are skipping spherical harmonics in color tracking due to its complexity which is outside of the scope of this paper.
+A forward pass is divided into five phases. For every phase we are tracking all five types of attributes (position, opacity, scale, rotation, color). We are skipping spherical harmonics in color tracking due to its complexity which is outside the scope of this paper.
 
-Forward and backward passes both make heavy use of a CUDA-based GPU. In the forward pass, the GPU is running one thread per 3D Gaussian for phases 1 to 3, waits for all threads to finish, performs a global radix sort in phase 4 and switches to running one thread per pixel of the output image for phase 5.
-For details about the internal workings of modern GPGPUs and related frameworks like Nvidia CUDA see \cite{oden2026APC}.
+Forward and backward passes both make heavy use of CUDA-based GPUs. In the forward pass, the GPU is running one thread per 3D Gaussian for phases 1 to 3, waits for all threads to finish, performs a global radix sort in phase 4 and switches to running one thread per pixel of the output image for phase 5.
+For details about the internal workings of modern GPGPUs and related frameworks like Nvidia CUDA see~\cite{oden2026APC}.
 
-\paragraph{Phase 1: Preparing Attributes and the 3D Covariance Matrix} Scale, rotation and opacity values are available in the so-called \textit{latent space} used for raw, unconstrained values that the optimizer calculated in the previous step of the backward pass. With the color value being retrieved and the position always fully unconstrained, this means the algorithm converts raw scale values to valid ones using the exponential function, normalizes the quaternion and bounds the opacity to $[0,1]$ using the sigmoid function:
- $$s = e^{s_{raw}},\hspace{1cm} q = \frac{q_{raw}}{\vert{}\vert{}q_{raw}\vert{}\vert{}},\hspace{1cm} o = \frac{1}{1 + e^{-o_{raw}}}$$
+\paragraph{Phase 1: Preparing Attributes and the 3D Covariance Matrix} Scale, rotation and opacity values are available in the so-called \textit{latent space} used for raw, unconstrained values that the optimizer calculated in the previous step of the backward pass. With the color value being retrieved and the position always fully unconstrained, this means the algorithm converts raw scale values to valid ones using the exponential function, normalizes the quaternion and bounds the opacity to $(0,1)$ using the sigmoid function:
+$$
+s = e^{s_{raw}},
+\hspace{1cm}
+q = \frac{q_{raw}}{\vert{}\vert{}q_{raw}\vert{}\vert{}},
+\hspace{1cm}
+o = \frac{1}{1 + e^{-o_{raw}}}
+$$
 This shows why the algorithm had to invert the initial values for $s$ and $o$ after initialization. 
 
 It then rebuilds the 3D covariance matrix according to chapter \ref{ch:matrix_decomp} by creating the scaling matrix $S$ from $s$ and rotational matrix $R$ from $q$, calculating $\Sigma_{3D} = R S S^T R^T = R S^2 R^T$.
-\subparagraph{Result} 3D Gaussian attributes and $\Sigma_{3D}$ are available in physical space.
+\subparagraph{Result} 3D Gaussian attributes and $\Sigma_{3D}$ are available in \textit{physical space}.
 
-\paragraph{Phase 2: Projection from 3D to 2D} We convert 3D Gaussians (ellipsoids) in worldspace into 2D Gaussians (ellipses) in image space using camera projection. 
-As applying standard pinhole projection is non-linear and would result in non-elliptic shapes for the 2D Gaussian, Zwicker et al \cite{zwickerEWAVolumeSplatting2001} introduced an \textit{affine approximation} of this projection which is linear and preserves the symmetrical properties of an ellipse.
-This first-order linear approximation of a non-linear multivariate function is the $2\times 3$ Jacobian matrix $J$. For that we move the center of a 3D Gaussian {$\mu$} into viewspace by multiplying with the $3\times 3$ rotational submatrix $W_{rot}$ of the extrinsic camera matrix (see chapter \ref{ch:init}) ($t=W_{rot}\cdot\mu$) and apply standard pinhole projection to it with focal lengths $f_x$ and $f_y$:
+\paragraph{Phase 2: Projection from 3D to 2D} We convert 3D Gaussians (ellipsoids) in world space into 2D Gaussians (ellipses) in image space using camera projection. 
+As applying standard pinhole projection~\cite{marschnerFundamentalsComputerGraphics2021} is non-linear and would result in non-elliptic shapes for the 2D Gaussian, Zwicker et al.~\cite{zwickerEWAVolumeSplatting2001} introduced an \textit{affine approximation} of this projection which is linear and preserves the symmetrical properties of an ellipse.
+This first-order linear approximation of a non-linear multivariate function is the $2\times 3$ Jacobian matrix~$J$. For that we move the center of a 3D Gaussian {$\mu$} into view space by multiplying with the $3\times 3$ rotational submatrix $W_{rot}$ of the extrinsic camera matrix (see chapter \ref{ch:init}), $t=W_{rot}\cdot \mu_{3D}$, and apply standard pinhole projection to it with focal lengths $f_x$ and $f_y$:
 $$
 u_x = f_x \frac{t_x}{t_z}, \hspace{0.5cm}
 u_y = f_y \frac{t_y}{t_z}, \hspace{0.5cm}
@@ -33,8 +39,8 @@ J = \begin{bmatrix}
     0 & \frac{f_y}{t_z} & -f_y \frac{t_y}{t_z^2}
 \end{bmatrix}
 $$
-yielding $\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^T J^T$ with $\Sigma_{2D}$ a $2\times 2$ matrix. The inner matrix product $W_{rot} \Sigma_{3D} W_{rot}^T$ moves the 3D covariance matrix into viewspace and the outer multiplication by the Jacobian $J$ then transforms the 3D Gaussian ellipsoid into a 2D Gaussian ellipse.
-The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T$. Color and opacity are not affected in this phase. In fact, the dimension-agnostic formula for opacity distribution (see chapter \ref{ch:gaussian}) is still valid in two dimensions : $\alpha(p) = o \cdot \exp\left(-\frac{1}{2}(p - \mu_{2D})^T \Sigma^{-1}_{2D}(p - \mu_{2D})\right)$.
+yielding $\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^T J^T \in \mathbb{R}^{2\times 2}$. The inner matrix product $W_{rot} \Sigma_{3D} W_{rot}^T \in \mathbb{R}^{3\times 3}$ moves the 3D covariance matrix into view space and the outer multiplication by the Jacobian $J$ then transforms the 3D Gaussian ellipsoid into a 2D Gaussian ellipse.
+The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T \in \mathbb{R}^2$. Color and opacity are not affected in this phase. In fact, the dimension-agnostic formula for opacity distribution (see chapter~\ref{ch:gaussian}) is also valid in two dimensions: $\alpha(p) = o \cdot \exp\left(-\frac{1}{2}(p - \mu_{2D})^T \Sigma^{-1}_{2D}(p - \mu_{2D})\right)$.
 
 Consequently, the algorithm precalculates $\Sigma_{2D}^{-1}$, the inverse of the 2D covariance matrix, as only three values A, B and C in order to avoid frequent recalculation in the last phase:
 $$
@@ -57,7 +63,7 @@ $$
 $$
 \subparagraph{Result} Each Gaussian is defined in 3D and 2D.
 
-\paragraph{Phase 3: Preparing Radix Sort} First, the final output image will be rendered in tiles of $16\times 16$ pixels. For this we need to know how many tiles a 2D Gaussian spans which the algorithms achieves by calculating a 2D bounding box for a 2D Gaussian.
+\paragraph{Phase 3: Preparing Radix Sort} First, the final output image will be rendered in tiles of $16\times 16$ pixels. For this we need to know how many tiles a 2D Gaussian covers which the algorithm achieves by calculating a 2D bounding box for a 2D Gaussian.
 
 Second, in order to perform splatting in the final phase, we need to know the distance of the center of the \textit{3D} Gaussian from the camera. For the distance the algorithm does not use the Euclidean/radial distance but \textit{planar Z-depth}, the orthogonal distance from the view plane which is the camera sensor. Z-depth is the value $t_z$ already available. 
 Discrepancies where two 3D Gaussians $a$ and $b$ have different shapes, $\mu_z^a < \mu_z^b$ but the shape of $b$ is closer to the camera than the shape of $a$, smooth out over time.
@@ -65,19 +71,25 @@ Discrepancies where two 3D Gaussians $a$ and $b$ have different shapes, $\mu_z^a
 For each tile the bounding box of a 2D Gaussian touches, the algorithm stores a 64-bit entry in VRAM which consists of the tile ID in the higher 32 bits and the Z-depth in the lower 32 bits (and a pointer to the Gaussian data structure). This de facto is duplication.
 \subparagraph{Result} An unordered list of 2D Gaussian tile and depth information in VRAM.
 
-\paragraph{Phase 4: Global Radix Sort} The GPU waits until all threads have finished calculating their per-Gaussian logic. Radix Sort \cite{RadixSort2026} is a non-comparative sorting algorithm which runs highly optimized on Nvidia GPUs using a library called \textit{CUB} \cite{adinets2022onesweepfastersignificantdigit}.
+\paragraph{Phase 4: Global Radix Sort} The GPU waits until all threads have finished calculating their per-Gaussian logic. Radix Sort~\cite{RadixSort2026} is a non-comparative sorting algorithm which runs highly optimized on Nvidia GPUs using a library called \textit{CUB}~\cite{adinets2022onesweepfastersignificantdigit}.
 For the actual splatting we need to have a sorted list of all 2D Gaussians per tile. Running Radix Sort once on the prepared unordered list is extremely fast (1ms per 10 million entries) and directly sorts all 2D Gaussians by tile and then by depth.
 \subparagraph{Result} A list of 2D Gaussians sorted by depth (closest first) for every $16\times 16$ tile.
 
 \paragraph{Phase 5: Tile-Based Rasterization} We are now in 2D image space. Using the sorted list of Gaussian information we implicitly performed frustum culling with each view frustum having a view plane which is a tile of $16\times 16$ pixels. The algorithm now splats all 2D Gaussians in a tile from closest to farthest onto the view plane adding to the pixel colors.
-As the sorted list is per-tile, some 2D Gaussians will not be considered for certain pixels. This slight redundancy far outweighs the massive speed ups originating from perfectly mapping the 256 pixels to threads in a GPU thread block \cite{kerbl3DGaussianSplatting2023} which has the same size. This means each thread in the thread block calculates the color of one pixel. 
+As the sorted list is per-tile, some 2D Gaussians will not be considered for certain pixels. This slight redundancy far outweighs the massive speed-ups originating from perfectly mapping the 256 pixels to threads in a GPU thread block~\cite{kerbl3DGaussianSplatting2023} which has the same size. This means each thread in the thread block calculates the color of one pixel. 
 
-The process calculating the color of a pixel from a sorted list of colored and transparent objects is called \textit{Alpha Compositing} and well-known \cite{porterCompositingDigitalImages1984} \cite{maxOpticalModelsDirect1995} and also used by NeRFs \cite{mildenhallNeRFRepresentingScenes2020}.
+The process calculating the color of a pixel from a sorted list of colored and transparent objects is called \textit{Alpha Compositing} and well-known~\cite{porterCompositingDigitalImages1984}\cite{maxOpticalModelsDirect1995} and also used by NeRFs~\cite{mildenhallNeRFRepresentingScenes2020}.
 
-The color $C_p$ of a pixel according to alpha compositing is $$C_p = \sum_{i=1}^{N} c_i \alpha_i T_i, \hspace{0.5cm}\text{with}\hspace{0.5cm} T_i = \prod_{j=1}^{i-1} (1 - \alpha_j) \hspace{0.5cm}\text{the transmittance,}$$
+The color $C_p$ of a pixel according to alpha compositing is
+$$
+C_p = \sum_{i=1}^{N} c_i \alpha_i T_i,
+\hspace{0.5cm} \text{with} \hspace{0.5cm}
+T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)
+\hspace{0.5cm} \text{the transmittance,}
+$$
 $c_i$ the color of the 2D Gaussian,
-$\alpha_i$ the opacity of the 2D Gaussian calculated via the three 2D covariance matrix values stored after projection which turns matrix multiplication into a simple polynomial: $E = -\frac{1}{2} (A \cdot dx^2 + 2B \cdot dx \cdot dy + C \cdot dy^2)$ with $(dx, dy)$ the distance from the pixel center to the 2D Gaussian center point resulting in $\alpha_i = o \cdot \exp(E)$ and $N$ the length of the sorted per-tile list. The transmittance is the opacity left over at 2D Gaussian $i$ after all 2D Gaussians before $i$ have already been aggregated in the pixel color.
+$\alpha_i$ the opacity of the 2D Gaussian calculated via the three 2D covariance matrix values stored after projection which turns matrix multiplication into a simple polynomial: $E = -\frac{1}{2} (A \cdot dx^2 + 2B \cdot dx \cdot dy + C \cdot dy^2)$ with $(dx, dy)$ the distance from the pixel center to the 2D Gaussian center point resulting in $\alpha_i = o \cdot \exp(E)$, and $N$ the length of the sorted per-tile list. The transmittance is the opacity left over at 2D Gaussian $i$ after all 2D Gaussians before $i$ have already been aggregated in the pixel color.
 
-This means each GPU thread runs a loop over all Gaussians in the sorted list from closest to farthest, splatting each 2D Gaussian against the view plane until the trans\-mit\-tance has reached almost $0$. This early-stopping shortcut as well as not having to consider empty samples like NeRF along its ray marching path, yield another massive speed up.
+This means each GPU thread runs a loop over all Gaussians in the sorted list from closest to farthest, splatting each 2D Gaussian against the view plane until the trans\-mit\-tance has reached almost $0$. This early-stopping shortcut as well as not having to consider empty samples like NeRF along its ray marching path, yields another massive speed-up.
 \subparagraph{Result} The final rendered image.
 

@@ -29,7 +29,7 @@
 \author{Sebastian Frehmel}
 
 \englishabstract{3D Gaussian Splatting (3DGS) denotes a seminal approach to 3D reconstruction and novel-view synthesis which was first published in 2023.
-This paper introduces the underlying motivation, algorithms and concepts of 3DGS in full detail as of the original publication followed by a selection of applications of 3DGS, focussing on dynamic scene reconstruction as a more in-depth example.}
+This paper introduces the underlying rationale and concepts of 3DGS for an audience outside of Computer Graphics, but within Data Science. The original publication is analyzed in full detail with an emphasis on the intrinsic steps of the training procedure.}
 
 \begin{document}
 \maketitle
@@ -45,7 +45,7 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 
 %What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
 
-\section{3D Reconstruction Training Procedure}
+\section{Training Procedure for 3D Reconstruction}
 \input{chapters/ch_04_1}
 
 \input{chapters/ch_04_2}
@@ -53,7 +53,7 @@ This paper introduces the underlying motivation, algorithms and concepts of 3DGS
 \input{chapters/ch_04_3}
 
 \section{Novel-View Synthesis}
-Once the scene has been trained as per the previous chapter, we can use the camera matrices of a novel view and execute the existing forward pass to synthesize a new image.
+Once the scene has been trained as per the previous chapter, we can use the camera matrices of a novel view and execute the existing forward pass to render a new image.
 
 %\section{Improvements}
 %\label{ch:improvements}
