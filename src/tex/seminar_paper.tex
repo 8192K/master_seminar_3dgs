@@ -5,94 +5,40 @@
 \usepackage{amsmath}					           % overall enhancements to math environment
 \usepackage{amsthm}                                % for theorems and other environments
 \usepackage{url}                                   % for linking external urls
-%\usepackage{booktabs}                             % for nicer tables 
 \usepackage[hidelinks]{hyperref}                   % for automatic hyperlinks
-%\usepackage{tikz}                                 % creating graphs and other structures
 \usepackage{microtype}
 \usepackage{fnpct}
+\usepackage{caption}
 \usepackage{subcaption}
+\usepackage{float}
+
+\DeclareCaptionLabelFormat{figsub}{(\thefigure#2)}
+\captionsetup[subfigure]{labelformat=figsub}
 
 \RedeclareSectionCommand[
-  beforeskip=0pt,
-  %afterskip=-1sp % A trick to keep it run-in with exactly zero extra space
+  beforeskip=0pt
 ]{subparagraph}
-
-%\renewcommand{\sectioncatchphraseformat}[4]{%
-%  \Ifstr{#1}{subparagraph}{%
-%    \hskip #2\makebox[1.5cm][l]{#3#4}%
-%  }{%
-%    \hskip #2#3#4%
-%  }%
-%}
 
 \title{Seminar: Artificial Intelligence - Visual Computing\\3D Gaussian Splatting}
 \author{Sebastian Frehmel}
 
 \englishabstract{3D Gaussian Splatting (3DGS) denotes a seminal approach to 3D reconstruction and novel-view synthesis which was first published in 2023.
-This paper introduces the underlying rationale and concepts of 3DGS for an audience outside of Computer Graphics, but within Data Science. The original publication is analyzed in full detail with an emphasis on the intrinsic steps of the training procedure.}
+This paper introduces the underlying rationale and concepts of 3DGS for a Data and Computer Science audience outside of Computer Graphics. The original publication is analyzed in full detail with an emphasis on the constituent steps of the training procedure.}
 
 \begin{document}
 \maketitle
-\section{Introduction to the Field of 3D Reconstruction}
+
 \input{chapters/ch_01}
 
-\section{Motivation for 3D Gaussian Splatting}
 \input{chapters/ch_02}
 
-\section{3D Gaussian Data Structure}
-\label{ch:gaussian}
 \input{chapters/ch_03}
 
-%What is commonly referred to as ''3D Gaussian Splatting'' (3DGS) could therefore more explicitly be described as ''Explicit Radiance Fields using Anisotropic 3D Gaussian Splatting''.
-
-\section{Training Procedure for 3D Reconstruction}
 \input{chapters/ch_04_1}
-
 \input{chapters/ch_04_2}
-
 \input{chapters/ch_04_3}
 
-\section{Novel-View Synthesis}
-Once the scene has been trained as per the previous chapter, we can use the camera matrices of a novel view and execute the existing forward pass to render a new image.
-
-%\section{Improvements}
-%\label{ch:improvements}
-%\begin{itemize}
-%    \item Aliasing
-%    \item Flickering
-%    \item Compression, Codebooks
-%    \item other distributions (beta)
-%    \item Transparency
-%    \item optimizations for flat sufaces
-%    \item better initialization
-%\end{itemize}
-
-%\section{Applications and Use Cases }
-%\subsection{Dynamic Scene Reconstruction}
-%\cite{NEURIPS2025_6c39d1a7}
-
-\section{Conclusion \& Future Developments}
-
-%IDEA: Make one graphics page with 8 to 10 subfigures to save space.
-\begin{figure}[htbp!]
-    \centering
-    \begin{subfigure}{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/view_frustum.pdf}
-        \caption{View frustum}
-        \label{fig:view_frustum}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/view_frustum.pdf}
-        \caption{Gaussians}
-        \label{fig:gaussians}
-    \end{subfigure}
-    \caption{Images}
-\end{figure}
-
-\newpage
+\input{chapters/ch_0506.tex}
 
 \bibliographystyle{plain}
 \bibliography{references}

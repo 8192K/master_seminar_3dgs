@@ -1,8 +1,12 @@
-Training a 3DGS scene starts with a point cloud which we take as the positions for initial 3D Gaussians. Following, forward and backpropagation passes alternate similar to those in neural networks~\cite{thimm2025ML}, modifying opacity, position, shape and color of each 3D Gaussian in the scene. After each error-correcting backward pass the forward pass renders an image from the same camera pose as the corresponding input image until differences between rendered and input images converge which takes tens of thousands of iterations.
+\section{Training Procedure for 3D Reconstruction}
+Training a 3DGS scene starts with a point cloud which we take as the positions for initial 3D Gaussians. Following, forward and backpropagation passes alternate similar to those in neural networks~\cite{thimm2025ML}, modifying opacity, position, shape and color of each 3D Gaussian in the scene.
+After each error-correcting backward pass the forward pass renders an image from the same camera pose as the corresponding input image until differences between rendered and input images converge which takes tens of thousands of iterations.
 
 Pivotal for training quality is so-called \textit{Adaptive Density Control} which periodically steps in after backpropagation, further modifying 3D Gaussians.
 
-In this chapter we will closely follow Kerbl et al.~\cite{kerbl3DGaussianSplatting2023} and their GitHub repository~\cite{kerblRepo}. The entire training procedure is based on neural/differentiable rendering concepts introduced by Yifan et al.~\cite{yifanDifferentiableSurfaceSplatting2019} and ''Pulsar'' by Lassner and Zollhöfer~\cite{lassnerPulsarEfficientSpherebased2021} which can be seen as the direct predecessors of the rendering pipeline used for 3DGS. However, there are only very few papers that directly bisect the pipeline math (like~\cite{huang2DGaussianSplatting2024} or~\cite{yuMipSplattingAliasFree3D2024} when improving the algorithm) as most papers use 3DGS for various applications. This is why much content in this chapter originates from in-depth websites like the formidable MrNeRF GitHub repository~\cite{githubMrNerf} which provides further links.
+In this chapter we will closely follow Kerbl et al.~\cite{kerbl3DGaussianSplatting2023} and their GitHub repository~\cite{kerblRepo}. The entire training procedure is based on neural/differentiable rendering concepts introduced by Yifan et al.~\cite{yifanDifferentiableSurfaceSplatting2019} and ''Pulsar'' by Lassner and Zollhöfer~\cite{lassnerPulsarEfficientSpherebased2021} which can be seen as the direct predecessors of the rendering pipeline used for 3DGS.
+However, there are only very few papers that directly bisect the pipeline math (like~\cite{huang2DGaussianSplatting2024} or~\cite{yuMipSplattingAliasFree3D2024} when improving the algorithm) as most papers use 3DGS for various applications.
+This is why much content in this chapter originates from in-depth websites like the formidable MrNeRF GitHub repository~\cite{githubMrNerf} which provides further links.
 
 Additionally, another paper in this seminar deals with neural rendering.
 
@@ -10,8 +14,18 @@ Additionally, another paper in this seminar deals with neural rendering.
 \label{ch:init}
 Initialization in 3D reconstruction is a crucial step as the positions of the initial points or primitives decide how well the algorithm can reconstruct a scene.
 
-In order for the 3DGS learning algorithm to work, 3DGS needs initial geometry which is commonly a set of initial 3D Gaussians. This initial set is derived from input imagery such as photos or frames of a video. If the camera poses of this input imagery are not given directly, which is usually the case, the camera poses have be derived dynamically from the imagery.
-A camera pose is designated by a $4\times 4$ \textit{extrinsic matrix} $W$~\cite{marschnerFundamentalsComputerGraphics2021} consisting of the $3\times 3$ rotational matrix $W_{rot}$ which contains the orientation of a camera in 3D space, a $3\times 1$ translation vector $t$ denoting the position of the camera in world space and a padding row to make $W$ square: $$W=\begin{bmatrix} R_{11} & R_{12} & R_{13} & t_x \\ R_{21} & R_{22} & R_{23} & t_y \\ R_{31} & R_{32} & R_{33} & t_z \\ 0 & 0 & 0 & 1 \end{bmatrix}$$
+In order for the 3DGS learning algorithm to work, 3DGS needs initial geometry which is commonly a set of initial 3D Gaussians. This initial set is derived from input imagery such as photos or frames of a video.
+If the camera poses of this input imagery are not given directly, which is usually the case, the camera poses have be derived dynamically from the imagery.
+A camera pose is designated by a $4\times 4$ \textit{extrinsic matrix} $W$~\cite{marschnerFundamentalsComputerGraphics2021} consisting of the $3\times 3$ rotational matrix $W_{rot}$ which contains the orientation of a camera in 3D space, a $3\times 1$ translation vector $t$ denoting the position of the camera in world space and a padding row to make $W$ square:
+$$
+W=
+\begin{bmatrix}
+    R_{11} & R_{12} & R_{13} & t_x \\
+    R_{21} & R_{22} & R_{23} & t_y \\
+    R_{31} & R_{32} & R_{33} & t_z \\
+    0 & 0 & 0 & 1
+\end{bmatrix}
+$$
 This matrix will become important later during forward and backpropagation steps.
 
 The other component of a camera pose is the \textit{intrinsic matrix} which holds parameters of the camera lens like focal lengths.

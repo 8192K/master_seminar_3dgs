@@ -1,3 +1,5 @@
+\section{3D Gaussian Data Structure}
+\label{ch:gaussian}
 Analyzing the original authors'~\cite{kerbl3DGaussianSplatting2023} repository~\cite{kerblRepo} or consulting survey papers like~\cite{bagdasarian3DGSzipSurvey3D2025} presents a 3D Gaussian as a data structure consisting of 14 to 59 attributes:
 
 \begin{itemize}
@@ -10,7 +12,7 @@ The reason a 3D Gaussian is called \textit{Gaussian} lies in its opacity distrib
 In other words we multiply the peak opacity value with a probability given by the three-dimensional normal distribution shaped by $\Sigma$. This way, a 3D Gaussian becomes rapidly more transparent toward its edges. Mathematically each 3D Gaussian reaches into infinity with values asymptotically near 0 the farther from the center the opacity is being calculated. 
 To remedy this effect, 3DGS enforces a hard 3-Sigma boundary meaning that everything outside three standard deviations from $\mu$ is being culled, establishing an ellipsoid bounding shape which captures 99.7\% of the 3D Gaussian.
 
-The shape a 3D Gaussian takes is therefore only defined by the density of its opacity distribution or as it is usually visualized, by its ellipsoid bounding shape (see fig.~\ref{fig:gaussians}).
+The shape a 3D Gaussian takes is therefore only defined by the density of its opacity distribution or as it is usually visualized, by its ellipsoid bounding shape.
 
 \subsection{3D Gaussian Covariance Matrix Decomposition}
 \label{ch:matrix_decomp}
@@ -24,6 +26,14 @@ As running a loop during backpropagation to find new valid values for the entire
 
 $\Sigma$ can be decomposed into a $3\times 3$ scaling matrix~$S$ and a $3\times 3$ rotational matrix~$R$: $\Sigma = RSS^TR^T$ which is itself just an instance of the default eigendecomposition $\Sigma = Q\Delta Q^T$ with eigenvectors $Q$ (rotations) and a diagonal matrix of eigenvalues $\Delta$ (scaling). Lastly, since $S$ is a diagonal matrix, $SS^T=S^2=\Delta$.
 
-The scaling matrix can now be decomposed into three scaling values $[s_1, s_2, s_3]$ which are the roots of the eigenvalues of $\Sigma$. Also, the rotational matrix can be further decomposed into four values $[w, x, y, z]$ called a \textit{quaternion} in the following way~\cite{Shoemake1985AnimatingRW}:$$R = \begin{bmatrix} 1 - 2(y^2 + z^2) & 2(xy - wz) & 2(xz + wy) \\ 2(xy + wz) & 1 - 2(x^2 + z^2) & 2(yz - wx) \\ 2(xz - wy) & 2(yz + wx) & 1 - 2(x^2 + y^2) \end{bmatrix}$$
+The scaling matrix can now be decomposed into three scaling values $[s_1, s_2, s_3]$ which are the roots of the eigenvalues of $\Sigma$. Also, the rotational matrix can be further decomposed into four values $[w, x, y, z]$ called a \textit{quaternion} in the following way~\cite{Shoemake1985AnimatingRW}:
+$$
+R =
+\begin{bmatrix} 
+    1 - 2(y^2 + z^2) & 2(xy - wz) & 2(xz + wy) \\
+    2(xy + wz) & 1 - 2(x^2 + z^2) & 2(yz - wx) \\ 
+    2(xz - wy) & 2(yz + wx) & 1 - 2(x^2 + y^2) 
+\end{bmatrix}
+$$
 
 With the covariance matrix fully decomposed into two smaller components, 3DGS only ever stores these seven values for each 3D Gaussian and treats each component separately in the backpropagation process. A new covariance matrix can be constructed from both components which is guaranteed to be positive semi-definite and thus geometrically valid since an eigendecomposition is always positive semi-definite~\cite{riedel2025mathematische}.
