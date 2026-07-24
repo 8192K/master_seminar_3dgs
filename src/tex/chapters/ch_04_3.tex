@@ -55,11 +55,11 @@ While $\mathcal{L}_1$ provides a direction for color alignment, D-SSIM acts as a
 with $C_{behind}$ the accumulated color of everything behind 2D Gaussian $i$. Conceptually, this gradient increases evaluated opacity $\alpha_i$ if the 2D Gaussian's color $c_i$ reduces the pixel error more effectively than the accumulated color of the geometry behind it ($C_{behind}$).
 Conversely, if the geometry behind it is more accurate, the gradient decreases $\alpha_i$ to let the background geometry show through.
 
-If the 2D Gaussian spans multiple pixels, the GPU adds all gradients of a type atomically into an aggregated gradient: e.g. $\text{Total } \frac{\partial L}{\partial \alpha_i} = \sum_{p \in \text{Pixels}} \left( \frac{\partial L}{\partial \alpha_i} \text{ for pixel } p \right)$. This applies to phase 3 as well.
+If the 2D Gaussian spans multiple pixels, the GPU adds all gradients of a type atomically into an aggregated gradient: e.g. $\text{Total } \frac{\partial L}{\partial \alpha_i} = \sum_{p \in \text{Pixels}} ( \frac{\partial L}{\partial \alpha_i} \text{ for pixel } p )$. This applies to phase 3 as well.
 \subparagraph{Result:} Final gradients for color, intermediate gradients for evaluated opacity.
 
 \paragraph{Phase 3: 2D Splat to 2D Geometry} The gradient for \textit{evaluated} opacity $\alpha_i$ now flows into the physical properties of a 2D Gaussian: the actual base opacity $o$, position $\mu_{2D}$, and 2D covariance matrix $\Sigma_{2D}$ adjusting 2D geometry by moving and changing shape.
-For this, we recall the opacity distribution $\alpha_i(p) = o \cdot \exp\left(-\frac{1}{2}\Delta p^T \Sigma^{-1}_{2D}\Delta p\right)$ with $\Delta = p - \mu_{2D}$ or simplified with $E$ denoting the exponent: $\alpha_i(p) = o \cdot e^E$.
+For this, we recall the opacity distribution $\alpha_i(p) = o \cdot \exp(-\frac{1}{2}\Delta p^T \Sigma^{-1}_{2D}\Delta p)$ with $\Delta = p - \mu_{2D}$ or simplified with $E$ denoting the exponent: $\alpha_i(p) = o \cdot e^E$.
 \begin{flalign*}
 \text{For the base opacity, the derivative is simple:} \hspace{3mm}
 \frac{\partial L}{\partial o} =
@@ -125,7 +125,7 @@ The unprojections seem intuitive, using the transposes of the forward projection
 \subparagraph{Result:} Final gradients for the 3D Gaussian center, intermediate gradients for $\Sigma_{3D}$.
 
 \paragraph{Phase 5: 3D Geometry to 3D Gaussian Attributes} In the last phase, the algorithm flows the $\frac{\partial L}{\partial \Sigma_{3D}}$ gradient through the 3D covariance matrix assembly into the raw constituent attributes $s_{raw}$ for the scaling matrix $S$ and quaternion $q_{raw}$ for the rotational matrix~$R$.
-The exact math behind is again out of scope, so we list the major steps. $\Sigma_{3D} = R S S^T R^T = M M^T$ with $M = RS$. First, we calculate $\frac{\partial L}{\partial M} = 2 \left( \frac{\partial L}{\partial \Sigma_{3D}} \right) M \in \mathbb{R}^{3\times 3}$ and split this into $\frac{\partial L}{\partial S} = R^T \left( \frac{\partial L}{\partial M} \right)$ for scale and $\frac{\partial L}{\partial R} = \left( \frac{\partial L}{\partial M} \right) S$ for rotation.
+The exact math behind is again out of scope, so we list the major steps. We recall $\Sigma_{3D} = R S S^T R^T = M M^T$ with $M = RS$. First, we calculate $\frac{\partial L}{\partial M} = 2 ( \frac{\partial L}{\partial \Sigma_{3D}} ) M \in \mathbb{R}^{3\times 3}$ and split this into $\frac{\partial L}{\partial S} = R^T ( \frac{\partial L}{\partial M} )$ for scale and $\frac{\partial L}{\partial R} = ( \frac{\partial L}{\partial M} )S$ for rotation.
 By extracting the diagonal from $\frac{\partial L}{\partial S}$ we get $\frac{\partial L}{\partial s} \in \mathbb{R}^{+3}$. For the rotation we calculate the partial derivatives of $R$ (Chapter~\ref{ch:matrix_decomp}) of each of the four components and aggregate those results into $\frac{\partial L}{\partial q} \in \mathbb{R}^4$.
 
 Finally, we have to backpropagate through activation function $\exp$ for $s_{raw}$, simplifying to $e^{s_{raw}}=s$, and the normalization function for $q_{raw}$ resulting in another Jacobian matrix:

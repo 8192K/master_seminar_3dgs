@@ -4,15 +4,14 @@ Once the scene has been trained as per the previous chapter, we can use the came
 
 \vspace{-5pt}
 \section{Conclusion}
-Kerbl et al. did not invent 3D Gaussians, nor splatting, nor 3D covariance matrix decomposition, nor spherical harmonics, nor neural or differential rendering, nor alpha compositing, nor explicit radiance fields, nor many other technologies. They, however, recognized the progress and the remaining limitations of NeRFs, noting that even explicit radiance field solutions failed to reach real-time novel-view synthesis.
-
-Consequently, they resurrected 3D Gaussian Splatting from the depths of academia and reimagined it for the current age. By combining all of these existing components, they realized that decomposing a 3D covariance matrix into scale and quaternions would always yield a geometrically valid covariance matrix. Passing these two components separately into backpropagation elegantly solved previous optimization issues.
-
-The other major contribution of 3DGS is the powerful mapping of the algorithm onto hardware, especially for the ultra-fast Radix Sort and tile-based rasterizer. 
-
-Furthermore, Adaptive Density Control did not exist in previous 3D reconstruction technologies and is critical to the continuously fast rendering speeds of 3DGS.
-
-This seminar paper aims to have provided a deeper understanding of the basic concepts of 3D Gaussian Splatting and its fundamental details during initialization, forward pass, and backpropagation, a focus aggregated as such previously unavailable.
+Kerbl et al. did not invent 3D Gaussians, nor splatting, nor 3D covariance matrix decomposition, nor spherical harmonics, nor neural or differential rendering, nor alpha compositing, nor explicit radiance fields, nor many other technologies used in 3DGS. They, however, acknowledged the progress and the remaining limitations of NeRFs, noting that even explicit radiance field solutions failed to reach real-time novel-view synthesis.
+\begin{itemize}[leftmargin=*, nosep]
+    \item In a true academic effort they combined all these pre-existing technologies and research from different fields into something new, linking them with own approaches.
+    \item They realized that decomposing a 3D covariance matrix into scale and quaternions would always yield a geometrically valid covariance matrix. Passing these two components separately into backpropagation elegantly solved previous optimization issues.
+    \item Adaptive Density Control did not exist in previous 3D reconstruction technologies and is critical to the continuously fast rendering speeds of 3DGS.
+    \item Besides the academic effort there was also the engineering effort mapping the algorithm onto hardware, especially for the ultra-fast Radix Sort and tile-based rasterizer. 
+\end{itemize}
+This seminar paper aims to have provided a deeper understanding of the concepts of 3D Gaussian Splatting and its fundamental details during initialization, forward pass, and backpropagation, a focus aggregated as such previously unavailable.
 
 \newpage
 
