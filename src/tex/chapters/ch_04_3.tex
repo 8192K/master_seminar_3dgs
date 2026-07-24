@@ -90,7 +90,7 @@ $$
 \in \mathbb{R}^{2\times 2}
 $$
 Deriving $\frac{\partial \alpha_i}{\partial \Sigma_{2D}}$ is out of scope for this paper as it is too lengthy. Again we have the vector $v$ multiplied by its own transpose which results in a matrix gradient making the 2D Gaussian stretch itself towards the pixel if the evaluated opacity gradient is positive, or else contract.
-\subparagraph{Result:} Final gradients for base opacity, intermediate gradients for $\Sigma_{2D}$.
+\subparagraph{Result:} Final gradients for base opacity, intermediate gradients for $\Sigma_{2D}$ and $\mu_{2D}$.
 
 \newpage
 
@@ -136,7 +136,7 @@ $$
 \hspace{3mm} \text{with} \hspace{3mm}
 J_{norm} = \frac{1}{\vert{}\vert{}q_{raw}\vert{}\vert{}} \left( I - q q^T \right)
 $$
-\subparagraph{Result:} Final gradients for scale and rotation. The backward pass is done.
+\subparagraph{Result:} Final gradients for scale and rotation. The backward pass is complete.
 
 \subsubsection{Adaptive Density Control (ADC)}
 In order to counter over-reconstruction (a 3D Gaussian covering too much geometry) and under-reconstruction (too few 3D Gaussians covering geometry), Kerbl et al. \cite{kerbl3DGaussianSplatting2023} introduced this regulating mechanism, which steps in every 100 iterations after the backward pass. For the former case the 3D Gaussian in question is split into two smaller Gaussians, reduced in size by a factor of $1.6$ and positioned slightly apart within the space of the old Gaussian. For the latter case the 3D Gaussian is cloned and the clone's position is moved towards the positional gradient (see Figure \ref{fig:adc} on page \pageref{fig:adc}). 

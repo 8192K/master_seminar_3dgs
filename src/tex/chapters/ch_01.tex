@@ -15,7 +15,7 @@ An \textit{implicit radiance field}~\cite{hubertEditingImplicitExplicit2025a} is
 \par
 \endgroup
 
-One well-known implementation of radiance fields are \textit{Neural Radiance Fields} (NeRFs) introduced by Mildenhall et al. in 2020~\cite{mildenhallNeRFRepresentingScenes2020}. NeRFs take a set of input images and use a neural network to learn an implicit radiance field representation of the resulting scene, which means the full scene is encoded in the neural network's weights.
+One well-known implementation of radiance fields are \textit{Neural Radiance Fields} (NeRFs) introduced by Mildenhall et al. in 2021~\cite{mildenhallNeRFRepresentingScenes2020}. NeRFs take a set of input images and use a neural network to learn an implicit radiance field representation of the resulting scene, which means the full scene is encoded in the neural network's weights.
 In order to perform novel-view synthesis for a NeRF, a technique called \textit{volumetric ray marching} is employed. 
 For every pixel in the novel view the NeRF algorithm transmits a ray through the implicit radiance field resulting in a very high number of queries to the neural network for each (discretized) point along the path of the ray before adding up all predicted RGB and opacity values to form the final color value of each pixel~\cite{mildenhallNeRFRepresentingScenes2020}.
 For more information on NeRFs refer to the previous paper in this seminar.

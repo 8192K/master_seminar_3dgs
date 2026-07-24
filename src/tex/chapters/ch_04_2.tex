@@ -75,7 +75,7 @@ For each tile the bounding box of a 2D Gaussian touches, the algorithm stores a 
 For the actual splatting, we need to have a sorted list of all 2D Gaussians per tile. Running Radix Sort once on the prepared unordered list is extremely fast (around 1ms per 10 million entries) and directly sorts all 2D Gaussians by tile and then by depth.
 \subparagraph{Result:} A list of 2D Gaussians sorted by depth (closest first) for every $16\times 16$ tile.
 
-\paragraph{Phase 5: Tile-Based Rasterization} We are now in 2D image space. Using the sorted list of Gaussian information we implicitly performed frustum culling with each view frustum having a view plane, which is a tile of $16\times 16$ pixels. The algorithm now splats all 2D Gaussians in a tile from closest to farthest onto the view plane, adding to the pixel colors.
+\paragraph{Phase 5: Tile-Based Rasterization} We are now in 2D image space. Using the sorted list of Gaussian information we implicitly performed frustum culling with each view frustum having a tile of $16\times 16$ pixels as the view plane. The algorithm now splats all 2D Gaussians in a tile from closest to farthest onto the view plane, adding to the pixel colors.
 
 As the sorted list is per-tile, some 2D Gaussians will not be considered for certain pixels. The massive speed-ups originating from perfectly mapping the 256 pixels to threads in a GPU thread block \cite{kerbl3DGaussianSplatting2023} far outweigh this slight redundancy. This means each thread in the thread block calculates the color of one pixel. 
 
