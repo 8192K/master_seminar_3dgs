@@ -7,12 +7,12 @@ $L = (1 - \lambda) \cdot \mathcal{L}_1 + \lambda \cdot \mathcal{L}_\text{D-SSIM}
 \subsection{Backward Pass}
 \label{ch:backprop}
 During backpropagation, the loss from comparing the rendered image resulting from the previous forward pass with the original input image is passed backward from the image through to 2D Gaussians and finally the 3D Gaussians via gradient descent in principle identical to neural networks~\cite{thimm2025ML}.
-If the loss is small enough or the algorithm has reached a maximum number of iterations (usually around 30,000~\cite{kerbl3DGaussianSplatting2023}), backward pass and training algorithm terminate, providing the final reconstructed 3D scene.
+If the loss is small enough or if the algorithm has reached a maximum number of iterations (usually around 30,000~\cite{kerbl3DGaussianSplatting2023}), backward pass and training algorithm terminate, providing the final reconstructed 3D scene.
 
 \vspace{-8pt}
 \subsubsection{Phases}
 \vspace{-3pt}
-A backward pass is divided into five phases. On the GPU, phases 1--3 use the known $16\times 16$ pixel tiles while phases 4 and 5 are running per-Gaussian.
+Again, we divide a backward pass into five logical phases. On the GPU, phases 1 to 3 use the known $16\times 16$ pixel tiles while in phases 4 and 5 threads are running per-Gaussian.
 
 Also, the algorithm still has access to the per-tile lists of 2D Gaussians sorted by depth as well as the computational graph containing intermediate results from the forward pass.
 
@@ -139,13 +139,13 @@ $$
 \subparagraph{Result:} Final gradients for scale and rotation. The backward pass is complete.
 
 \subsubsection{Adaptive Density Control (ADC)}
-In order to counter over-reconstruction (a 3D Gaussian covering too much geometry) and under-reconstruction (too few 3D Gaussians covering geometry), Kerbl et al. \cite{kerbl3DGaussianSplatting2023} introduced this regulating mechanism, which steps in every 100 iterations after the backward pass. For the former case the 3D Gaussian in question is split into two smaller Gaussians, reduced in size by a factor of $1.6$ and positioned slightly apart within the space of the old Gaussian. For the latter case the 3D Gaussian is cloned and the clone's position is moved towards the positional gradient (see Figure \ref{fig:adc} on page \pageref{fig:adc}). 
+In order to counter over-reconstruction (a 3D Gaussian covering too much geometry) and under-reconstruction (too few 3D Gaussians covering geometry), Kerbl et al. \cite{kerbl3DGaussianSplatting2023} introduced this regulating mechanism, which steps in every 100 iterations after phase~5 of the backward pass. For the former case the 3D Gaussian in question is split into two smaller Gaussians, reduced in size by a factor of $1.6$ and positioned slightly apart within the space of the old Gaussian. For the latter case the 3D Gaussian is cloned and the clone's position is moved towards the positional gradient (see Figure \ref{fig:adc} on page \pageref{fig:adc}). 
 
 New 3D Gaussians simply enter the subsequent forward pass and get adjusted in the pipeline like all other Gaussians.\newpage
 
-Furthermore, there is a pruning step. 3D Gaussians with too low opacity or unbound scale are deleted. In addition to that, every 3,000 iterations, the base opacity is reset to almost $0$ for all 3D Gaussians. This causes important ones to regain opacity quickly, while unimportant ones fade out completely and are deleted.
-
 The authors achieve this by accumulating the 2D positional gradient $\left\Vert{}\frac{\partial L}{\partial \mu_{2D}}\right\Vert{}$. If the sum has reached a certain threshold when ADC is running, meaning the Gaussian experienced a series of high positional gradients, the algorithm checks if it should split or clone.
+
+Furthermore, there is a pruning step. 3D Gaussians with too low opacity or unbound scale are deleted. In addition to that, every 3,000 iterations, the base opacity is reset to almost $0$ for all 3D Gaussians. This causes important ones to regain opacity quickly, while unimportant ones fade out completely and are deleted.
 
 \vspace{-5pt}
 \subsubsection{Optimization Step}
@@ -153,4 +153,4 @@ Where regular gradient descent would simply calculate \texttt{new\_value = old\_
 With per-parameter learning rate $l_p$, $0 < l_p \ll 1$, the new value makes a tiny step: $l_p \cdot \frac{m_{t,p}}{\sqrt{v_{t,p}} + \epsilon}$. 
 Smoothing out over momentum and variance of the past iterations, Adam ensures all 3D Gaussians gently vibrate and morph into their correct geometric shapes, positions, colors, and opacities.
 
-Closing the circle to the next forward pass, all new, raw values reside in latent space.
+Closing the loop to the next forward pass, all new, raw values reside in latent space.

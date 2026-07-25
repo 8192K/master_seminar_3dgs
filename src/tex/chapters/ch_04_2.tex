@@ -5,7 +5,7 @@ At the beginning of each forward pass, the algorithm selects an input image and 
 In principle, the forward pass is performing the splatting operation of all 3D Gaussians in the scene to render a new image.
 
 \subsubsection{Phases}
-A forward pass is divided into five phases. For every phase we track all five types of attributes (position, opacity, scale, rotation, color). We skip spherical harmonics in color tracking due to its complexity, which is outside the scope of this paper.
+We decompose the forward pass into five logical phases. For every phase we track all five types of attributes (position, opacity, scale, rotation, color). We skip spherical harmonics in color tracking due to its complexity, which is outside the scope of this paper.
 
 Forward and backward passes both make heavy use of CUDA-based GPUs. In the forward pass, the GPU is running one thread per 3D Gaussian for phases 1 to 3, waits for all threads to finish, performs a global radix sort in phase 4, and switches to running one thread per pixel of the output image for phase 5.
 For details about the internal workings of modern GPGPUs and related frameworks like Nvidia CUDA see~\cite{oden2026APC}.
@@ -20,7 +20,7 @@ o = \frac{1}{1 + e^{-o_{raw}}}
 $$
 This shows why the algorithm had to invert the initial values for $s$ and $o$ after initialization. 
 
-It then rebuilds the 3D covariance matrix according to Chapter \ref{ch:matrix_decomp} by creating the scaling matrix $S$ from $s$ and rotational matrix $R$ from $q$, calculating $\Sigma_{3D} = R S S^T R^T = R S^2 R^T$.
+It then rebuilds the 3D covariance matrix according to Chapter \ref{ch:matrix_decomp} by creating the scaling matrix $S$ from $s$ and rotational matrix $R$ from $q$, calculating $\Sigma_{3D} = M M^T, M = RS$.
 \subparagraph{Result:} 3D Gaussian attributes and $\Sigma_{3D}$ are available in \textit{physical space}.
 
 \paragraph{Phase 2: Projection from 3D to 2D} We convert 3D Gaussians (ellipsoids) in world space into 2D Gaussians (ellipses) in image space using camera projection. 
@@ -40,7 +40,7 @@ J = \begin{bmatrix}
 \end{bmatrix}
 $$
 yielding $\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^T J^T \in \mathbb{R}^{2\times 2}$. The inner matrix product $W_{rot} \Sigma_{3D} W_{rot}^T$ moves the 3D covariance matrix into view space, and the outer multiplication by the Jacobian $J$ then transforms the 3D Gaussian ellipsoid into a 2D Gaussian ellipse.
-The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T \in \mathbb{R}^2$. Color and opacity are not affected in this phase. In fact, the dimension-agnostic formula for opacity distribution (see Chapter~\ref{ch:gaussian}) is also valid in two dimensions: $\alpha(p) = o \cdot \exp\left(-\frac{1}{2}(p - \mu_{2D})^T \Sigma^{-1}_{2D}(p - \mu_{2D})\right)$.
+The center of the 2D Gaussian is $\mu_{2D}=(u_x, u_y)^T \in \mathbb{R}^2$. Color and opacity are not affected in this phase. In fact, the dimension-agnostic formula for opacity distribution (see Chapter~\ref{ch:gaussian}) is also valid in two dimensions: $\alpha(p) = o \cdot \exp\left(-\frac{1}{2}\Delta^T \Sigma^{-1}_{2D}\Delta\right), \Delta = p - \mu_{2D}$.
 
 Consequently, the algorithm precalculates $\Sigma_{2D}^{-1}$, the inverse of the 2D covariance matrix, as only three values A, B, and C in order to avoid frequent recalculation in the last phase:
 $$

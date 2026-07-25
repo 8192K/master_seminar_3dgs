@@ -1,12 +1,14 @@
+\vspace{-5pt}
 \section{Training Procedure for 3D Reconstruction}
 Training a 3DGS scene starts with a point cloud which contains all positions for the initial 3D Gaussians. Following this, forward and backpropagation passes alternate similar to those in neural networks~\cite{thimm2025ML}, modifying opacity, position, shape, and color of each 3D Gaussian in the scene.
 After each error-correcting backward pass, the forward pass renders an image from the same camera pose as the corresponding input image until differences between rendered and input images converge, which takes tens of thousands of iterations. Pivotal for training quality is so-called \textit{Adaptive Density Control}, which periodically steps in after backpropagation, further modifying 3D Gaussians \cite{kerbl3DGaussianSplatting2023}.
 
 In this chapter we will closely follow Kerbl et al.~\cite{kerbl3DGaussianSplatting2023} and their GitHub repository~\cite{kerblRepo}. The entire training procedure is based on neural/differentiable rendering concepts introduced by Yifan et al.~\cite{yifanDifferentiableSurfaceSplatting2019} and ``Pulsar'' by Lassner and Zollhöfer~\cite{lassnerPulsarEfficientSpherebased2021} which can be seen as the direct predecessors of the rendering pipeline used for 3DGS.
-However, there are only very few papers that directly dissect the pipeline math (like~\cite{huang2DGaussianSplatting2024} or~\cite{yuMipSplattingAliasFree3D2024} when improving the algorithm) as most papers use 3DGS for various applications.
-This is why much content in this chapter originates from independent research and deductions or from in-depth websites like the formidable MrNeRF GitHub repository~\cite{githubMrNerf} which provides further links.
+However, there are only very few papers that directly dissect parts of the pipeline math (like~\cite{huang2DGaussianSplatting2024} or~\cite{yuMipSplattingAliasFree3D2024} when improving the algorithm) as most papers use 3DGS for various applications only.
 
-Additionally, another paper in this seminar deals with neural rendering.
+This is why much content in this chapter originates from independent research and deductions or from in-depth websites like the formidable ``MrNeRF'' GitHub repository~\cite{githubMrNerf} and others like \cite{ComprehensiveStudyGaussian2025, matuszczykRendering3DGaussian2024, yurkovaComprehensiveOverviewGaussian2023}. These references are valid throughout the chapter.
+
+For more focus, another paper in this seminar deals with neural rendering.
 
 \subsection{Point Cloud Initialization}
 \label{ch:init}
