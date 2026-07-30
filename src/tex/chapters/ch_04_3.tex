@@ -56,7 +56,7 @@ with $C_{behind}$ the accumulated color of everything behind 2D Gaussian $i$. Co
 On the other hand, if the geometry behind it is more accurate, the gradient decreases $\alpha_i$ to let the background geometry show through.
 
 If the 2D Gaussian spans multiple pixels, the GPU adds all gradients of a type atomically into an aggregated gradient: e.g. $\text{Total } \frac{\partial L}{\partial \alpha_i} = \sum_{p \in \text{Pixels}} ( \frac{\partial L}{\partial \alpha_i} \text{ for pixel } p )$. This applies to phase 3 as well.
-\subparagraph{Result:} Final gradients for color, intermediate gradients for evaluated opacity.
+\subparagraph{Result:} Final gradients for color $c$, intermediate gradients for evaluated opacity $\alpha$.
 
 \paragraph{Phase 3: 2D Splat to 2D Geometry} The gradient for \textit{evaluated} opacity $\alpha_i$ now flows into the physical properties of a 2D Gaussian: the actual base opacity $o$, position $\mu_{2D}$, and 2D covariance matrix $\Sigma_{2D}$ adjusting 2D geometry by moving and changing shape.
 For this, we recall the opacity distribution $\alpha_i(p) = o \cdot \exp(-\frac{1}{2}\Delta p^T \Sigma^{-1}_{2D}\Delta p)$ with $\Delta = p - \mu_{2D}$ or simplified with $E$ denoting the exponent: $\alpha_i(p) = o \cdot e^E$.
@@ -90,7 +90,7 @@ $$
 \in \mathbb{R}^{2\times 2}
 $$
 Again we have the vector $v$ multiplied by its own transpose which results in a matrix gradient making the 2D Gaussian stretch itself towards the pixel if the evaluated opacity gradient is positive, or else contract.
-\subparagraph{Result:} Final gradients for base opacity, intermediate gradients for $\Sigma_{2D}$ and $\mu_{2D}$.
+\subparagraph{Result:} Intermediate gradients for base opacity $o$, $\Sigma_{2D}$ and $\mu_{2D}$.
 
 \newpage
 
@@ -122,21 +122,24 @@ We omit deriving the same for $\Sigma_{2D}$ to $\Sigma_{3D}$ as it is again too 
 %\vspace{-8pt}
 \end{flalign*}
 The unprojections seem intuitive, using the transposes of the forward projection matrices.
-\subparagraph{Result:} Final gradients for the 3D Gaussian center, intermediate gradients for $\Sigma_{3D}$.
+\subparagraph{Result:} Final gradients for 3D Gaussian center $\mu_{3D}$, intermediate gradients for $\Sigma_{3D}$.
 
 \paragraph{Phase 5: 3D Geometry to 3D Gaussian Attributes} In the last phase, the algorithm flows the $\frac{\partial L}{\partial \Sigma_{3D}}$ gradient through the 3D covariance matrix assembly into the raw constituent attributes $s_{raw}$ for the scaling matrix $S$ and quaternion $q_{raw}$ for the rotational matrix~$R$.
 The exact math behind is again too lengthy, so we list the major steps. We recall $\Sigma_{3D} = R S S^T R^T = M M^T$ with $M = RS$. First, we calculate $\frac{\partial L}{\partial M} = 2 ( \frac{\partial L}{\partial \Sigma_{3D}} ) M \in \mathbb{R}^{3\times 3}$ and split this into $\frac{\partial L}{\partial S} = R^T ( \frac{\partial L}{\partial M} )$ for scale and $\frac{\partial L}{\partial R} = ( \frac{\partial L}{\partial M} )S$ for rotation.
 By extracting the diagonal from $\frac{\partial L}{\partial S}$ we get $\frac{\partial L}{\partial s} \in \mathbb{R}^{+3}$. For the rotation we calculate the partial derivatives of $R$ (Chapter~\ref{ch:matrix_decomp}) of each of the four components and aggregate those results into $\frac{\partial L}{\partial q} \in \mathbb{R}^4$.
 
-Finally, we have to backpropagate through activation function $\exp$ for $s_{raw}$, simplifying to $e^{s_{raw}}=s$, and the normalization function for $q_{raw}$ resulting in another Jacobian matrix:
+Finally, we have to backpropagate through activation function $\exp$ for $s_{raw}$ ($e^{s_{raw}}=s$), the normalization function for $q_{raw}$ as well as the sigmoid function for base opacity $o_{raw}$:
 $$
 \frac{\partial L}{\partial s_{raw}} = \frac{\partial L}{\partial s} \cdot s
-\hspace{5mm} \text{and} \hspace{5mm}
-\frac{\partial L}{\partial q_{raw}} = J_{norm}^T \frac{\partial L}{\partial q}
-\hspace{3mm} \text{with} \hspace{3mm}
-J_{norm} = \frac{1}{\vert{}\vert{}q_{raw}\vert{}\vert{}} \left( I - q q^T \right)
+\hspace{3mm} \text{and} \hspace{3mm}
+\frac{\partial L}{\partial q_{raw}} = J_{\vert{}\vert{}}^T \frac{\partial L}{\partial q}
+\hspace{2mm} \text{with} \hspace{2mm}
+J_{\vert{}\vert{}} = \frac{I - q q^T}{\vert{}\vert{}q_{raw}\vert{}\vert{}}
+\hspace{3mm} \text{and} \hspace{3mm}
+\frac{\partial L}{\partial o_{raw}} = \frac{\partial L}{\partial o} \cdot o(1 - o)
+% \hspace{1mm}\text{$I$ $4\times 4$ identity matrix.}
 $$
-\subparagraph{Result:} Final gradients for scale and rotation. The backward pass is complete.
+\subparagraph{Result:} Final gradients for scale $s$, rotation $q$ and base opacity $o$. Pass is complete.
 
 \subsubsection{Adaptive Density Control (ADC)}
 In order to counter over-reconstruction (a 3D Gaussian covering too much geometry) and under-reconstruction (too few 3D Gaussians covering geometry), Kerbl et al. \cite{kerbl3DGaussianSplatting2023} introduced this regulating mechanism, which steps in every 100 iterations after phase~5 of the backward pass. For the former case the 3D Gaussian in question is split into two smaller Gaussians, reduced in size by a factor of $1.6$ and positioned slightly apart within the space of the old Gaussian. For the latter case the 3D Gaussian is cloned and the clone's position is moved towards the positional gradient (see Figure \ref{fig:adc} on page \pageref{fig:adc}). 

@@ -91,5 +91,5 @@ $c_i$ the color of the 2D Gaussian, $\alpha_i$ the opacity of the 2D Gaussian, a
 $\alpha_i = o \cdot \exp(E)$, with $E = -\frac{1}{2} (A \cdot dx^2 + 2B \cdot dx \cdot dy + C \cdot dy^2)$, $A$, $B$, and $C$ the 2D covariance matrix values stored after projection in phase 2, and $(dx, dy)$ the distance from the pixel center to the 2D Gaussian center point, simplifying matrix multiplication significantly. The transmittance is the opacity left over at 2D Gaussian $i$ after all 2D Gaussians before $i$ have already been aggregated in the pixel color.
 
 This means each GPU thread runs a loop over all Gaussians in the sorted list from closest to farthest, splatting each 2D Gaussian against the view plane until the trans\-mit\-tance has reached almost $0$. This early-stopping shortcut as well as not having to consider empty samples like NeRF along its ray marching path, yields another massive speed-up.
-\subparagraph{Result:} The final rendered image.
+\subparagraph{Result:} The final rendered image. Pass is complete.
 
