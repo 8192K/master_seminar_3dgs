@@ -1,1 +1,1 @@
-$success_cmd = 'cp %R.pdf ../../pdf/seminar_paper_pre.pdf';
+$success_cmd = 'cp %R.pdf ../../pdf/seminar_paper_frehmel_final.pdf';

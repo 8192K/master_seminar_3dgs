@@ -3,9 +3,9 @@
 \usepackage{amsfonts}					           % math fonts
 \usepackage{amssymb}					           % math symbols
 \usepackage{amsmath}					           % overall enhancements to math environment
-\usepackage{amsthm}                                % for theorems and other environments
-\usepackage[hyphens]{url}                                   % for linking external urls
-\usepackage[hidelinks]{hyperref}                   % for automatic hyperlinks
+\usepackage{amsthm}                      % for theorems and other environments
+\usepackage[hyphens]{url}                % for linking external urls
+\usepackage[hidelinks]{hyperref}         % for automatic hyperlinks
 \usepackage{microtype}
 \usepackage{fnpct}
 \usepackage{caption}
@@ -14,15 +14,12 @@
 \usepackage{enumitem}
 \usepackage{datetime2}
 
-%\DeclareCaptionLabelFormat{figsub}{(\thefigure#2)}
-%\captionsetup[subfigure]{labelformat=figsub}
-
 \RedeclareSectionCommand[
   beforeskip=0pt
 ]{subparagraph}
 
 \title{Seminar: Artificial Intelligence - Visual Computing\\3D Gaussian Splatting}
-\author{Sebastian Frehmel (version: \DTMToday~\DTMcurrenttime)}
+\author{Sebastian Frehmel}
 
 \englishabstract{3D Gaussian Splatting (3DGS) represents a seminal approach to 3D reconstruction and novel-view synthesis first published in 2023 by Kerbl et al.
 This paper introduces the underlying historical developments, motivation, and concepts of 3DGS for a Data Science audience. We examine the 3DGS algorithm in full detail with an emphasis on dissecting the constituent steps of the training procedure.}

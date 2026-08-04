@@ -11,6 +11,7 @@ If the loss is small enough or if the algorithm has reached a maximum number of 
 
 \vspace{-8pt}
 \subsubsection{Phases}
+\label{ch:backprop:phases}
 \vspace{-3pt}
 We decompose the backward pass into five logical phases. On the GPU, phases 1 to 3 use the known $16\times 16$ pixel tiles while in phases 4 and 5 threads are running per-Gaussian.
 
@@ -46,7 +47,7 @@ While $\mathcal{L}_1$ provides a direction for color alignment, D-SSIM acts as a
 \in \mathbb{R}^3 &&
 \end{flalign*}
 \begin{flalign*}
-\text{and for evaluated opacity at pixel $p$} \hspace{0.4cm} 
+\text{and for evaluated opacity at pixel $p$} \hspace{5mm} 
 \frac{\partial L}{\partial \alpha_i} = 
 \frac{\partial L}{\partial C_p} \cdot \frac{\partial C_p}{\partial \alpha_i} = 
 \frac{\partial L}{\partial C_p} \cdot T_i (c_i - C_{behind})
@@ -135,7 +136,7 @@ Finally, we have to backpropagate through activation function $\exp$ for $s_{raw
 $$
 \frac{\partial L}{\partial s_{raw}} = \frac{\partial L}{\partial s} \cdot s
 \hspace{3mm} \text{and} \hspace{3mm}
-\frac{\partial L}{\partial q_{raw}} = J_{\vert{}\vert{}}^T \frac{\partial L}{\partial q}
+\frac{\partial L}{\partial q_{raw}} = J_{\vert{}\vert{}} \cdot \frac{\partial L}{\partial q}
 \hspace{2mm} \text{with} \hspace{2mm}
 J_{\vert{}\vert{}} = \frac{I - q q^T}{\vert{}\vert{}q_{raw}\vert{}\vert{}}
 \hspace{3mm} \text{and} \hspace{3mm}

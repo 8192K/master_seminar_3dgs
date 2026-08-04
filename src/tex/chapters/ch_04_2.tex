@@ -19,7 +19,7 @@ s = e^{s_{raw}},
 \hspace{1cm}
 q = \frac{q_{raw}}{\vert{}\vert{}q_{raw}\vert{}\vert{}},
 \hspace{1cm}
-o = \frac{1}{1 + e^{-o_{raw}}}
+o = \sigma(o_{raw}) = \frac{1}{1 + e^{-o_{raw}}}
 \vspace{-5pt} 
 $$
 This shows why the algorithm had to invert the initial values for $s$ and $o$ after initialization. 
@@ -27,7 +27,7 @@ This shows why the algorithm had to invert the initial values for $s$ and $o$ af
 
 \vspace{-5pt}
 \paragraph{Phase 2: Reconstructing the 3D Covariance Matrix} The algorithm rebuilds the 3D covariance matrix according to Chapter \ref{ch:matrix_decomp} by creating the scaling matrix $S$ from $s$ and rotational matrix $R$ from $q$, calculating $\Sigma_{3D} = M M^T$, with $M = RS$.
-\subparagraph{Result:} 3D Covariance Matrix $\Sigma_{3D}$ is available.
+\subparagraph{Result:} 3D covariance matrix $\Sigma_{3D}$ is available.
 
 \vspace{-5pt} 
 \paragraph{Phase 3: Projection from 3D to 2D} We convert 3D Gaussians (ellipsoids) in world space into 2D Gaussians (ellipses) in image space using camera projection. 
