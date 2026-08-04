@@ -1,40 +1,20 @@
-\vspace{-5pt}
+\vspace{-4pt}
 \section{Novel-View Synthesis}
-Once the scene has been trained as per the previous chapter, we can use the camera matrices of a novel view and execute the existing forward pass to render a new image.
+Once the scene has been trained as per the previous chapter, the algorithm performs phase~2 of the forward pass once to calculate the 3D covariance matrix for all 3D Gaussians. From then on, novel-view synthesis is feed-forward only, repeating forward pass phases~3 to~6 for every novel view. There is no longer any need for conversions from latent to physical space with the backward pass, Adaptive Density Control, and the Adam optimizer now disabled \cite{kerblRepo}. We can use the camera matrices of any camera position in the scene to render a new image.
 
-\vspace{-5pt}
+With the raw speed of the tile-based rasterizer, novel-view synthesis in 3DGS quickly reaches real-time levels \cite{kerbl3DGaussianSplatting2023}. Under certain conditions, even 1000+ FPS are possible \cite{NEURIPS2025_6c39d1a7}.
+
+\vspace{-4pt}
 \section{Conclusion}
-Kerbl et al. neither invented 3D Gaussians, nor splatting, nor 3D covariance matrix decomposition, nor spherical harmonics, nor neural or differential rendering, nor alpha compositing, nor explicit radiance fields, nor many other technologies used in 3DGS. They, however, acknowledged the progress and the remaining limitations of NeRFs, noting that even explicit radiance field solutions failed to reach real-time novel-view synthesis.
-\begin{itemize}[leftmargin=*, nosep]
-    \item In a true academic effort they combined all these pre-existing technologies and research from different fields into something new, linking them with own approaches.
-    \item They realized that decomposing a 3D covariance matrix into scale and quaternions would always yield a geometrically valid covariance matrix. Passing these two components separately into backpropagation elegantly solved previous optimization issues.
-    \item Adaptive Density Control did not exist in previous 3D reconstruction technologies and is critical to the continuously fast rendering speeds of 3DGS.
-    \item Besides the academic effort there was also the engineering effort mapping the algorithm onto hardware, especially for the ultra-fast Radix Sort and tile-based rasterizer. 
-\end{itemize}
-This seminar paper aims to have provided a deeper understanding of the concepts of 3D Gaussian Splatting and its fundamental details during initialization, forward pass, and backpropagation, a focus aggregated as such previously unavailable.
+In a true academic effort, Kerbl et al. combined previously existing research from different fields and proven technologies, linking them with their own approaches, to create a powerful 3D reconstruction pipeline using 3D Gaussian Splatting and appropriate hardware.
 
-\newpage
+This seminar paper aims to have provided a deeper understanding of the concepts of 3D Gaussian Splatting and its fundamental details during initialization, forward pass, and backpropagation within the uncommon setting of a non-neural architecture. 
+
+For an audience in Data Science and Computer Science at AIG, this focus sheds light on the inner workings and mathematical connections, which, aggregated as such, were previously unavailable or scattered across several resources. 
 
 \appendix
 
 \section{Figures}
-
-%\begin{figure}[H]
-%    \centering
-%    \begin{subfigure}{0.45\textwidth}
-%        \centering
-%        \includegraphics[width=\textwidth]{figures/view_frustum.pdf}
-%        \caption{A View Frustum with the frustum in blue. Elements in the frustum between view and far planes are considered.}
-%        \label{fig:view_frustum}
-%    \end{subfigure}
-%    \hfill
-%    \begin{subfigure}{0.45\textwidth}
-%        \centering
-%        \includegraphics[scale=0.26]{figures/6-Figure4-1.png}
-%        \caption{Adaptive Density Control situations for over- and under-reconstruction portraying cloning and splitting (from \cite{kerbl3DGaussianSplatting2023})}
-%        \label{fig:adc}
-%    \end{subfigure}
-%\end{figure}
 
 \begin{figure}[H]
     \centering

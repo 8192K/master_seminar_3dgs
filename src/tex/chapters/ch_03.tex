@@ -4,7 +4,7 @@ An analysis of the original authors'~\cite{kerbl3DGaussianSplatting2023} reposit
 
 \begin{itemize}
     \item Position $\mu$: three-dimensional coordinates in world space for the origin of the 3D Gaussian. (3 attributes)
-    \item Opacity $o$: the peak or base opacity at point $\mu$. It can be any number but is passed through a sigmoid function to bound it to $(0,1]$. (1 attribute)
+    \item Opacity $o$: the peak or base opacity at point $\mu$. It can be any number but is passed through a sigmoid function to bound it to $(0,1)$. (1 attribute)
     \item Covariance matrix $\Sigma$: A $3\times 3$ matrix determining 3D shape and rotation of the 3D Gaussian, but decomposed into three scaling values and four rotational values called a \textit{quaternion}. Decomposing the covariance matrix is pivotal for the backpropagation process, see Chapter~\ref{ch:matrix_decomp}. (7 attributes)
     \item \textit{Spherical Harmonics} (SH) coefficients $c$: model view-dependent colors and specular reflections. Spherical Harmonics come in four degrees~\cite{plenoctrees}. SH0 is a simple RGB value denoting a solid color of the 3D Gaussian that is not dependent on viewing angles. Degrees SH1 to SH3 contribute 3, 5, and 7 attributes per color channel each,  increasing the level of realism. SH3 is recommended for 3DGS~\cite{kerbl3DGaussianSplatting2023}. Spherical Harmonics and their complexity are out of scope for this paper, and we will implicitly mean SH when referring to any notion of color. (3-48 attributes)
 \end{itemize}
@@ -21,12 +21,12 @@ For the entire learning process to work with backpropagation and gradient descen
 During backpropagation, the algorithm would have to determine new, better values for
 \newpage
 \hspace{-5.2mm}
-the covariance matrix $\Sigma$ toward the direction gradient descent is pointing. However, in order to make sense geometrically, a covariance matrix in this case has to be positive semi-definite which means the determinant has to be $>=0$. 
+the covariance matrix $\Sigma$ toward the direction gradient descent is pointing. However, in order to make sense geometrically, a covariance matrix in this case has to be positive semi-definite which means the eigenvalues have to be $>=0$. 
 As running a loop during backpropagation to find new valid values for the entire covariance matrix until the whole matrix is positive semi-definite again while still satisfying gradient descent would be far too costly, Kerbl et~al.~\cite{kerbl3DGaussianSplatting2023} used a clever decomposition of the covariance matrix first proposed in 2019~\cite{yifanDifferentiableSurfaceSplatting2019} or later by a group involving team members of the Kerbl paper~\cite{kopanasPointBasedNeuralRendering2021}:
 
 $\Sigma$ can be decomposed into a $3\times 3$ scaling matrix~$S$ and a $3\times 3$ rotational matrix~$R$: $\Sigma = RSS^TR^T$ which is itself just an instance of the default eigendecomposition $\Sigma = Q\Delta Q^T$ with eigenvectors $Q$ (rotations) and a diagonal matrix of eigenvalues $\Delta$ (scaling). Lastly, since $S$ is a diagonal matrix, $SS^T=S^2=\Delta$.
 
-The scaling matrix can now be decomposed into three scaling values $[s_1, s_2, s_3]$ which are the roots of the eigenvalues of $\Sigma$. Also, the rotational matrix can be further decomposed into four values $[w, x, y, z]$ called a \textit{quaternion} in the following way~\cite{Shoemake1985AnimatingRW}:
+The scaling matrix can now be decomposed into three scaling values $(s_1, s_2, s_3)$ which are the roots of the eigenvalues of $\Sigma$. Also, the rotational matrix can be further decomposed into four values $(w, x, y, z)$ called a \textit{quaternion} in the following way~\cite{Shoemake1985AnimatingRW}:
 $$
 R =
 \begin{bmatrix} 
