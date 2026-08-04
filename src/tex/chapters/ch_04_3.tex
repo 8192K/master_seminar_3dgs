@@ -82,7 +82,8 @@ $$
 $$
 Vector $v$ is pointing directly from the 2D Gaussian's center to the pixel. If the evaluated opacity gradient is positive, the center is effectively pulled towards the pixel.
 
-For $\Sigma_{2D}$ we want to know how the opacity at pixel $p$ changes when the shape changes. We skip deriving $\frac{\partial \alpha_i}{\partial \Sigma_{2D}}$ as it is too lengthy for this paper:
+For $\Sigma_{2D}$ we want to know how the opacity at pixel $p$ changes when the shape changes. 
+Appendix \ref{ax:ph3} lists the derivation of $\frac{\partial \alpha_i}{\partial \Sigma_{2D}}$ which we provide here directly:
 $$
 \frac{\partial L}{\partial \Sigma_{2D}} = 
 \frac{\partial L}{\partial \alpha_i} \cdot \frac{\partial \alpha_i}{\partial \Sigma_{2D}} = 
@@ -115,17 +116,19 @@ W_{rot}^T J^T \frac{\partial L}{\partial \mu_{2D}} =
 U^T \left( \frac{\partial L}{\partial \mu_{2D}} \right)
 \in \mathbb{R}^3 &&
 \end{flalign*}
-We omit deriving the same for $\Sigma_{2D}$ to $\Sigma_{3D}$ as it is again too lengthy for this paper.
+Appendix \ref{ax:ph4} provides the complete calculation for $\Sigma_{2D}$ to $\Sigma_{3D}$.
+%We omit deriving the same for $\Sigma_{2D}$ to $\Sigma_{3D}$ as it is again too lengthy for this paper.
 \begin{flalign*}
-\text{However, the final gradient is very clean:} \hspace{5mm}
-\frac{\partial L}{\partial \Sigma_{3D}} = U^T \left( \frac{\partial L}{\partial \Sigma_{2D}} \right) U \in \mathbb{R}^{3\times 3}&&
+\text{In short, the final gradient is very clean:} \hspace{5mm}
+\frac{\partial L}{\partial \Sigma_{3D}} = 
+U^T \left( \frac{\partial L}{\partial \Sigma_{2D}} \right) U \in \mathbb{R}^{3\times 3}&&
 %\vspace{-8pt}
 \end{flalign*}
 The unprojections seem intuitive, using the transposes of the forward projection matrices.
 \subparagraph{Result:} Final gradients for 3D Gaussian center $\mu_{3D}$, intermediate gradients for $\Sigma_{3D}$.
 
 \paragraph{Phase 5: 3D Geometry to 3D Gaussian Attributes} In the last phase, the algorithm flows the $\frac{\partial L}{\partial \Sigma_{3D}}$ gradient through the 3D covariance matrix assembly into the raw constituent attributes $s_{raw}$ for the scaling matrix $S$ and quaternion $q_{raw}$ for the rotational matrix~$R$.
-The exact math behind is again too lengthy, so we list the major steps. We recall $\Sigma_{3D} = R S S^T R^T = M M^T$ with $M = RS$. First, we calculate $\frac{\partial L}{\partial M} = 2 ( \frac{\partial L}{\partial \Sigma_{3D}} ) M \in \mathbb{R}^{3\times 3}$ and split this into $\frac{\partial L}{\partial S} = R^T ( \frac{\partial L}{\partial M} )$ for scale and $\frac{\partial L}{\partial R} = ( \frac{\partial L}{\partial M} )S$ for rotation.
+Appendix \ref{ax:ph5} provides the exact math behind, we list the major steps here. We recall $\Sigma_{3D} = R S S^T R^T = M M^T$ with $M = RS$. First, we calculate $\frac{\partial L}{\partial M} = 2 ( \frac{\partial L}{\partial \Sigma_{3D}} ) M \in \mathbb{R}^{3\times 3}$ and split this into $\frac{\partial L}{\partial S} = R^T ( \frac{\partial L}{\partial M} )$ for scale and $\frac{\partial L}{\partial R} = ( \frac{\partial L}{\partial M} )S$ for rotation.
 By extracting the diagonal from $\frac{\partial L}{\partial S}$ we get $\frac{\partial L}{\partial s} \in \mathbb{R}^{+3}$. For the rotation we calculate the partial derivatives of $R$ (Chapter~\ref{ch:matrix_decomp}) of each of the four components and aggregate those results into $\frac{\partial L}{\partial q} \in \mathbb{R}^4$.
 
 Finally, we have to backpropagate through activation function $\exp$ for $s_{raw}$ ($e^{s_{raw}}=s$), the normalization function for $q_{raw}$ as well as the sigmoid function for base opacity $o_{raw}$:
