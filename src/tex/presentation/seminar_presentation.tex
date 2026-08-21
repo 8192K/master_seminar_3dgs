@@ -1,24 +1,31 @@
 %%% Choose between 16:9 and 4:3 format by commenting out/uncommenting one of the following lines:
 \documentclass[aspectratio=169]{beamer} % 16:9
-% \documentclass{beamer} % 4:3
+%\documentclass{beamer} % 4:3
 
 %=========================================================================================================================
 
 \usepackage[english]{babel}     % English language
 \usepackage[latin1]{inputenc}   % Input encoding
 \usepackage{tikz}               % For creating graphics
-\usepackage{url}                % For including urls
 \usepackage{tabularx}           % For better tables
+\usepackage{amsfonts}			% math fonts
+\usepackage{amssymb}			% math symbols
+\usepackage{amsmath}			% overall enhancements to math environment
+\usepackage{amsthm}             % for theorems and other environments
+\usepackage{url}                % for linking external urls
+\usepackage{xcolor}
+
+\usetikzlibrary{positioning, arrows.meta, overlay-beamer-styles}
 
 \usetheme{aig}                  % Set beamer theme
 
 %=========================================================================================================================
-\title{AIG Beamer Template}
+\title[3D Gaussian Splatting]{Master's Seminar: Artificial Intelligence - Visual Computing\\ 3D Gaussian Splatting}
 
-\author[S. Author]{Some Author}
+\author[S. Frehmel]{Sebastian Frehmel}
 \institute{Artificial Intelligence Group,\\
-University of Hagen, Germany}
-\date{\today}
+Fernuniversit\"at Hagen, Germany}
+\date{September 2nd, 2026}
 %=========================================================================================================================
 \logo{\includegraphics[width=3cm]{figures/logoaig2025_transparent.png}}
 %=========================================================================================================================
@@ -32,7 +39,7 @@ University of Hagen, Germany}
 \end{frame}
 \nologo
 
-\section{Section}
+\section{Section1}
 
 \begin{frame}{Blocks}
     \begin{block}{Block}
@@ -57,8 +64,7 @@ University of Hagen, Germany}
     \end{exampleblock}
 \end{frame}
 
-
-\subsection{Subsection}
+\subsection{Subsection2}
 
 \begin{frame}{Highlighting Text}
     We can \highlight{highlight} text. There are also a \darkhighlight{darker} option, and a \yellowhighlight{yellow} option.\\
