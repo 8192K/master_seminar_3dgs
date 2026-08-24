@@ -334,3 +334,4 @@ TSWLatexianTemp*
 src/tex/*.pdf
 src/tex/paper/*.pdf
 src/tex/presentation/*.pdf
+src/tex/presentation/files/*.pdf
