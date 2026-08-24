@@ -14,10 +14,52 @@
 \usepackage{amsthm}             % for theorems and other environments
 \usepackage{url}                % for linking external urls
 \usepackage{xcolor}
+\usepackage{ragged2e}
 
 \usetikzlibrary{positioning, arrows.meta, overlay-beamer-styles}
 
 \usetheme{aig}                  % Set beamer theme
+
+\AtBeginSection[]{  
+    \begingroup
+    % Temporarily redefine your custom footline without the page number
+    \setbeamertemplate{footline}{%
+      \leavevmode%
+      \hbox{\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm plus1fil,rightskip=.3cm]{author in head/foot}%
+        \usebeamerfont{author in head/foot}\hfill\insertshortauthor
+      \end{beamercolorbox}%
+      \begin{beamercolorbox}[wd=.7\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm,rightskip=.3cm plus1fil]{title in head/foot}%
+        \usebeamerfont{title in head/foot}\insertshorttitle\hfill%
+      \end{beamercolorbox}}%
+      \vskip0pt%
+    }
+    \begin{frame}[noframenumbering]
+        \frametitle{Overview}
+        \tableofcontents[currentsection,currentsubsection,subsectionstyle=show/shaded/shaded,subsubsectionstyle=show/shaded/shaded]
+    \end{frame}
+    \endgroup
+}
+
+% Table of contents -> subsections
+\AtBeginSubsection[]{  
+    \begingroup
+    % Temporarily redefine your custom footline without the page number
+    \setbeamertemplate{footline}{%
+      \leavevmode%
+      \hbox{\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm plus1fil,rightskip=.3cm]{author in head/foot}%
+        \usebeamerfont{author in head/foot}\hfill\insertshortauthor
+      \end{beamercolorbox}%
+      \begin{beamercolorbox}[wd=.7\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm,rightskip=.3cm plus1fil]{title in head/foot}%
+        \usebeamerfont{title in head/foot}\insertshorttitle\hfill% 
+      \end{beamercolorbox}}%
+      \vskip0pt%
+    }
+    \begin{frame}[noframenumbering]
+        \frametitle{Overview}
+        \tableofcontents[currentsection,currentsubsection,subsectionstyle=show/shaded/shaded,subsubsectionstyle=show/show/shaded]
+    \end{frame}
+    \endgroup
+}
 
 %=========================================================================================================================
 \title[3D Gaussian Splatting]{Master's Seminar: Artificial Intelligence - Visual Computing\\ 3D Gaussian Splatting}
@@ -34,28 +76,23 @@ Fernuniversit\"at Hagen, Germany}
 
 %=========================================================================================================================
 
-\begin{frame}
-  \titlepage
-\end{frame}
+{
+    \setbeamertemplate{footline}{}
+    \begin{frame}
+        \titlepage
+    \end{frame}
+}
 \nologo
+\setcounter{framenumber}{0}
 
-\section{Introduction and Motivation}
+\input{sections/sec_01.tex}
+\input{sections/sec_02.tex}
+\input{sections/sec_03.tex}
+\input{sections/sec_04.tex}
 
 
+\section{Discussion}
 
-\section{3D Gaussian Data Structure}
-
-\subsection{3D Gaussian Covariance Matrix Decomposition}
-
-\section{Training Procedure}
-
-\subsection{Point Cloud Initialization}
-
-\subsection{Forward Pass}
-
-\subsection{Backward Pass}
-
-\section{Novel-View Synthesis}
 
 \appendix
 
