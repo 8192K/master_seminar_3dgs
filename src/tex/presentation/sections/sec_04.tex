@@ -1,5 +1,104 @@
 \section{Novel-View Synthesis}
 
 \begin{frame}{Novel-View Synthesis}
-    
+    \begin{columns}[T]
+        % Left Column: Spotlighted Concepts (0.35 split)
+        \begin{column}{0.35\textwidth}
+            \textbf{Synthesis Phase}
+            \vspace{1em}
+            
+            \alt<1>{\textbf{\textcolor{blue}{Pre-computation}}}{\textcolor{gray}{Pre-computation}}\par\vspace{1em}
+            \alt<2>{\textbf{\textcolor{blue}{Feed-Forward Only}}}{\textcolor{gray}{Feed-Forward Only}}\par\vspace{1em}
+            \alt<3>{\textbf{\textcolor{blue}{Disabled Components}}}{\textcolor{gray}{Disabled Components}}\par\vspace{1em}
+            \alt<4>{\textbf{\textcolor{blue}{Real-Time Performance}}}{\textcolor{gray}{Real-Time Performance}}
+        \end{column}
+
+        % Right Column: Synchronized Explanations (0.6 split)
+        \begin{column}{0.6\textwidth}
+            \justifying 
+            \textbf{Details}
+            \vspace{1em}
+            
+            \only<1>{
+                Once the scene is fully trained, the algorithm performs Phase 2 of the forward pass one final time. This permanently calculates and stores the 3D covariance matrix for all 3D Gaussians.
+            }
+            \only<2>{
+                From then on, generating new images is strictly feed-forward. The algorithm repeatedly executes only Forward Pass Phases 3 to 6 (projection, sorting, and rasterization) using the camera matrix of any desired novel view.
+            }
+            \only<3>{
+                Because the scene geometry is finalized, the backward pass, Adaptive Density Control, and the Adam optimizer are completely disabled.
+            }
+            \only<4>{
+                Freed from the training overhead and powered by the raw speed of the tile-based rasterizer, 3DGS quickly reaches real-time rendering levels.
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\section{Discussion}
+
+
+\appendix
+
+\section{Appendix}
+
+\begin{frame}{Appendix: Backward Pass Phase 3 (Part 1)}
+    \textbf{Phase 3: 2D Splat to 2D Geometry (Opacity \& Position)}
+    \begin{itemize}
+        \item We recall the simplified opacity distribution: $\alpha_i(p) = o \cdot e^E$, where $E$ is the exponent derived from the pixel distance $\Delta$ and the inverse 2D covariance matrix.
+        \item \textbf{Base Opacity ($o$):} The derivative scales directly with the distance from the center of the 2D Gaussian ($e^E$):
+        $$ \frac{\partial L}{\partial o} = \frac{\partial L}{\partial \alpha_i} \cdot e^E $$
+        \item \textbf{Position ($\mu_{2D}$):} Let vector $v = \Sigma_{2D}^{-1}\Delta p$. This vector points directly from the 2D Gaussian's center to the pixel:
+        $$ \frac{\partial L}{\partial \mu_{2D}} = \frac{\partial L}{\partial \alpha_i} \cdot \alpha_i(p) \cdot v $$
+        \item If the evaluated opacity gradient is positive, the center is effectively pulled towards the pixel.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Appendix: Backward Pass Phase 3 (Part 2)}
+    \textbf{Phase 3: 2D Splat to 2D Geometry (Shape)}
+    \begin{itemize}
+        \item \textbf{2D Covariance Matrix ($\Sigma_{2D}$):} We must calculate how the opacity at pixel $p$ changes when the 2D shape of the Gaussian changes.
+        \item This uses the same vector $v$ from the position derivative, multiplied by its own transpose:
+        $$ \frac{\partial L}{\partial \Sigma_{2D}} = \frac{\partial L}{\partial \alpha_i} \cdot \frac{1}{2} \alpha_i(p) \cdot (v \cdot v^T) $$
+        \item Multiplying the vector by its transpose results in a matrix gradient.
+        \item If the evaluated opacity gradient is positive, this matrix gradient causes the 2D Gaussian to stretch itself towards the pixel; otherwise, it causes it to contract.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Appendix: Backward Pass Phase 4}
+    \textbf{Phase 4: 2D Geometry to 3D Geometry}
+    \begin{itemize}
+        \item The GPU thread model changes to running per-Gaussian to unproject the 2D data back into 3D.
+        \item This utilizes the multi-variable chain rule and the transposes of the forward projection matrices ($U = JW_{rot}$).
+        \item \textbf{3D Position ($\mu_{3D}$):} The gradient passes through view space ($t$) back to world space:
+        $$ \frac{\partial L}{\partial \mu_{3D}} = W_{rot}^T J^T \frac{\partial L}{\partial \mu_{2D}} = U^T \left( \frac{\partial L}{\partial \mu_{2D}} \right) $$
+        \item \textbf{3D Covariance ($\Sigma_{3D}$):} The final gradient unprojects cleanly using matrix $U$ on both sides:
+        $$ \frac{\partial L}{\partial \Sigma_{3D}} = U^T \left( \frac{\partial L}{\partial \Sigma_{2D}} \right) U $$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Appendix: Backward Pass Phase 5 (Part 1)}
+    \textbf{Phase 5: 3D Geometry to Matrix Components}
+    \begin{itemize}
+        \item Gradients flow through the covariance matrix assembly ($\Sigma_{3D} = MM^T$ with $M = RS$) into scale ($S$) and rotation ($R$).
+        \item First, the algorithm derives the intermediate matrix $M$:
+        $$ \frac{\partial L}{\partial M} = 2 \left( \frac{\partial L}{\partial \Sigma_{3D}} \right) M $$
+        \item Then, it splits this gradient into the separate components:
+        $$ \frac{\partial L}{\partial S} = R^T \left( \frac{\partial L}{\partial M} \right) \quad \text{and} \quad \frac{\partial L}{\partial R} = \left( \frac{\partial L}{\partial M} \right) S $$
+        \item The scale gradient ($\frac{\partial L}{\partial s}$) is extracted from the diagonal of $\frac{\partial L}{\partial S}$, while the quaternion gradient ($\frac{\partial L}{\partial q}$) aggregates the partial derivatives of $R$.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Appendix: Backward Pass Phase 5 (Part 2)}
+    \textbf{Phase 5: Backpropagating to Latent Attributes}
+    \begin{itemize}
+        \item To close the loop, the gradients pass backwards through their respective activation functions to reach the raw, latent space variables.
+        \item \textbf{Scale (Exponential):} Backpropagating through $\exp$ requires multiplying by $s$:
+        $$ \frac{\partial L}{\partial s_{raw}} = \frac{\partial L}{\partial s} \cdot s $$
+        \item \textbf{Rotation (Normalization):} Uses the Jacobian matrix ($J_{||}$) of the normalization function, with $J_{||} = \frac{I - qq^T}{||q_{raw}||}$:
+        $$ \frac{\partial L}{\partial q_{raw}} = J_{||} \cdot \frac{\partial L}{\partial q} $$
+        \item \textbf{Base Opacity (Sigmoid):} Backpropagating through the sigmoid function:
+        $$ \frac{\partial L}{\partial o_{raw}} = \frac{\partial L}{\partial o} \cdot o(1-o) $$
+    \end{itemize}
 \end{frame}

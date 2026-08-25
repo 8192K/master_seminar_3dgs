@@ -1,7 +1,6 @@
-%\skipsecframetrue
 \section{Training Procedure}
 
-\begin{frame}{The Training Cycle}
+\begin{frame}[label=training_cycle]{The Training Cycle}
    \centering
     
     % Wraps the TikZ diagram to ensure it fits the slide width perfectly
@@ -59,7 +58,7 @@
                 The 3DGS algorithm requires initial geometry, which is commonly derived from a set of input images.\\Because camera poses are usually unknown, Structure from Motion (SfM) software like COLMAP is used to solve a geometric optimization problem, providing an accurate 3D point cloud.
             }
             \only<2>{
-                As another result from SfM, each input image is assigned a $3\times3$ camera matrix~$W_{rot}$ which contains the camera's orientation in world space as well as its position~$t_{trans}$.
+                As another result from SfM, each input image is assigned a $3\times3$ camera matrix~$W_{rot}$ which contains the camera's orientation in world space.
             }
             \only<3>{
                 The SfM points act as the origins for the initial 3D Gaussians. 
@@ -78,7 +77,9 @@
 
 %\begin{frame}{Phase 1: Preparing Attributes}
 \begin{frame}{Forward Pass: Phases 1 \& 2}
-    The GPU is running one GPU thread per 3D Gaussian.
+    \begin{itemize}
+        \item The GPU is running one GPU thread per 3D Gaussian.
+    \end{itemize}
 
     \vspace{1em}
 
@@ -116,10 +117,77 @@
     \only<2>{
         \begin{figure}
             \centering
-            % Replace the TikZ dashed box below with: \includegraphics[width=0.9\linewidth]{your_image.png}
-            \begin{tikzpicture}
-                \draw[dashed, gray, thick] (0,0) rectangle (9, 5) 
-                    node[midway, font=\large\bfseries, text=gray] {Insert Graphic: 3D to 2D Projection};
+            \begin{tikzpicture}[scale=0.9, every node/.style={transform shape}]
+        
+                % ==========================================
+                % 1. 3D GAUSSIAN (WORLD/VIEW SPACE)
+                % ==========================================
+                \coordinate (mu3D) at (0, 0);
+
+                % Title
+                \node[blue!80!black, font=\Large\bfseries, align=center] at (0, 3) {3D World Space};
+
+                % 3D Fuzzy Blob
+                \foreach \i in {1,2,3,4,5,6} {
+                    \pgfmathsetmacro{\opac}{0.85 - \i*0.13}
+                    \fill[green!50!black, opacity=\opac, rotate around={20:(mu3D)}]
+                        (mu3D) ellipse ({2.0 - \i*0.3} and {1.3 - \i*0.2});
+                }
+
+                % 3D Coordinate Stub representing Covariance (\Sigma_{3D})
+                % Arrows point along the principal axes of the 3D ellipsoid
+                \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(20:1.8) node[right, font=\scriptsize] {}; % Major axis X
+                \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(110:1.1) node[above, font=\scriptsize] {}; % Minor axis Y
+                \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(230:0.9) node[below left, font=\scriptsize] {}; % Depth axis Z
+
+                % Center Point and Label
+                \node[circle, fill=black, inner sep=1.8pt] at (mu3D) {};
+                \node[below right, font=\small\bfseries, align=left, fill=white, fill opacity=0.7, text opacity=1, inner sep=2pt, rounded corners] 
+                    at (0.1, -0.2) {$\mu_{3D}$ \\ $\Sigma_{3D}$};
+
+
+                % ==========================================
+                % 2. MAPPING / PROJECTION ARROW
+                % ==========================================
+                \draw[-Latex, line width=1.5mm, gray!60] (2.2, 0) -- (5.5, 0) 
+                    node[midway, above, font=\large\bfseries, text=blue!80!black, align=center, yshift=2mm] {Projection \\ (Jacobian $J$)};
+
+
+                % ==========================================
+                % 3. 2D GAUSSIAN (IMAGE SPACE)
+                % ==========================================
+                \coordinate (mu2D) at (9, 0);
+
+                % Scope for Image Plane with a gentle rotation
+                \begin{scope}[shift={(mu2D)}, rotate=12] 
+                    
+                    % 16x16 Tile Grid Representation
+                    \fill[blue!5, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
+                    \draw[step=1.4cm, blue!20, thick] (-2.8, -2.8) grid (2.8, 2.8);
+                    \draw[blue!60, very thick, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
+
+                    % Label for Image Space (Rotation inherits from scope)
+                    \node[blue!80!black, font=\Large\bfseries, anchor=south] at (0, 3) {2D Image Space (Pixels)};
+
+                    % 2D Fuzzy Blob (Flattened via projection)
+                    \foreach \i in {1,2,3,4,5,6} {
+                        \pgfmathsetmacro{\opac}{0.85 - \i*0.13}
+                        \fill[green!50!black, opacity=\opac, rotate around={35:(0,0)}]
+                            (0,0) ellipse ({1.7 - \i*0.25} and {0.7 - \i*0.1});
+                    }
+
+                    % 2D Coordinate Stub representing Covariance (\Sigma_{2D})
+                    % Arrows point strictly along the 2D principal axes
+                    \draw[-Latex, very thick, red!80!black] (0,0) -- ++(35:1.6) node[right, font=\scriptsize] {}; % Major axis U
+                    \draw[-Latex, very thick, red!80!black] (0,0) -- ++(125:0.6) node[above, font=\scriptsize] {}; % Minor axis V
+
+                    % Center Point and Label
+                    \node[circle, fill=black, inner sep=1.8pt] at (0,0) {};
+                    \node[below right, font=\small\bfseries, align=left, fill=white, fill opacity=0.7, text opacity=1, inner sep=2pt, rounded corners] 
+                        at (0.1, -0.2) {$\mu_{2D}$ \\ $\Sigma_{2D}$};
+                        
+                \end{scope}
+
             \end{tikzpicture}
         \end{figure}
     }
@@ -164,11 +232,64 @@
     \only<2>{
         \begin{figure}
             \centering
-            % Replace the TikZ dashed box below with: \includegraphics[width=0.9\linewidth]{your_image.png}
-            \begin{tikzpicture}
-                \draw[dashed, gray, thick] (0,0) rectangle (9, 5) 
-                    node[midway, font=\large\bfseries, text=gray, align=center] {Insert Graphic: \\ Alpha Compositing \& Early Stopping};
-            \end{tikzpicture}
+            % Scales the entire graphic to perfectly fit the slide width
+            \hspace*{-5mm}
+            \begin{tikzpicture}[scale=0.73, every node/.style={transform shape}]
+                
+                % 1. Mathematically derived blended color from alpha compositing
+                % C_p = (0.4 * Red) + (0.5 * 0.6 * Green) + (0.8 * 0.3 * Blue)
+                \definecolor{blendedColor}{rgb}{0.4, 0.3, 0.24}
+                
+                % 2. The Target Pixel on the View Plane
+                \draw[thick, blue!60!black, fill=blendedColor] (-2.5, -1.2) rectangle (-0.5, 1.2);
+                \node[font=\Large\bfseries, blue!80!black, align=center] at (-1.5, 1.9) {Target \\ Pixel $p$};
+                \node[circle, fill=black, inner sep=1.5pt] (pixel) at (-1.5,0) {};
+                
+                % Labels inside the colored pixel
+                \node[font=\small\bfseries, text=white] at (-1.5, 0.4) {Blended};
+                \node[font=\small\bfseries, text=white] at (-1.5, -0.4) {Color};
+                
+                % 3. The Rendering Thread / Depth Ray
+                \draw[-Latex, very thick, gray] (pixel) -- (16.5, 0) node[right, font=\Large\bfseries] {Depth};
+                
+                % 4. Sorted 2D Gaussians (Alpha Compositing)
+                % Splat 1
+                \fill[red, opacity=0.4] (2.5, 0) ellipse (0.6 and 1.2);
+                \draw[red!80!black, thick] (2.5, 0) ellipse (0.6 and 1.2);
+                \node[above, font=\large\bfseries] at (2.5, 1.4) {Gaussian 1};
+                \node[below, font=\normalsize, align=center] at (2.5, -1.3) {Opacity \\ $\alpha_1=0.4$};
+                \node[below, font=\normalsize\bfseries, text=blue!70!black] at (2.5, -2.3) {$T_1=1.00$};
+                
+                % Splat 2
+                \fill[green, opacity=0.5] (6, 0.3) ellipse (0.7 and 1.3);
+                \draw[green!80!black, thick] (6, 0.3) ellipse (0.7 and 1.3);
+                \node[above, font=\large\bfseries] at (6, 1.8) {Gaussian 2};
+                \node[below, font=\normalsize, align=center] at (6, -1.3) {Opacity \\ $\alpha_2=0.5$};
+                \node[below, font=\normalsize\bfseries, text=blue!70!black] at (6, -2.3) {$T_2=0.60$};
+                
+                % Splat 3
+                \fill[blue, opacity=0.8] (9.5, -0.2) ellipse (0.5 and 1.0);
+                \draw[blue!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
+                \node[above, font=\large\bfseries] at (9.5, 1.2) {Gaussian 3};
+                \node[below, font=\normalsize, align=center] at (9.5, -1.3) {Opacity \\ $\alpha_3=0.8$};
+                \node[below, font=\normalsize\bfseries, text=blue!70!black] at (9.5, -2.3) {$T_3=0.30$};
+                
+                % 5. Early Stopping Barrier
+                \draw[dashed, red, very thick] (11.5, -2.5) -- (11.5, 2.5);
+                \node[red, font=\Large\bfseries, rotate=90] at (12, 0) {Early Stopping ($T_4 = 0.06 \approx 0$)};
+                
+                % 6. Culled / Ignored Geometry
+                \fill[gray, opacity=0.3] (13.5, 0.4) ellipse (0.6 and 1.1);
+                \draw[gray, dashed, thick] (13.5, 0.4) ellipse (0.6 and 1.1);
+                \node[above, font=\large\bfseries, text=gray] at (13.5, 1.7) {Gaussian 4};
+                
+                \fill[gray, opacity=0.2] (15, -0.3) ellipse (0.7 and 0.9);
+                \draw[gray, dashed, thick] (15, -0.3) ellipse (0.7 and 0.9);
+                \node[above, font=\large\bfseries, text=gray] at (15.2, 0.8) {Gaussian 5};
+                
+                \node[text=gray, font=\Large\bfseries, align=center] at (14.25, -1.9) {Geometry\\Ignored};
+                
+            \end{tikzpicture}%
         \end{figure}
     }
 \end{frame}
@@ -176,36 +297,176 @@
 
 \subsection{Backward Pass}
 
-\begin{frame}{Loss Function}
+\begin{frame}[label=gradient_flow]{Backward Pass: Gradient Flow Overview}
+    \centering
     
+    % Wraps the TikZ diagram to ensure it fits the slide width perfectly
+    \resizebox{\linewidth}{!}{%
+    \begin{tikzpicture}[
+        % Styles for variables and arrows
+        var/.style={circle, draw=blue!60!black, fill=blue!10, thick, minimum size=1.1cm, inner sep=0pt, font=\small\bfseries},
+        varfirst/.style={circle, draw=blue!60!black, thick, minimum size=1.1cm, inner sep=0pt, font=\small\bfseries},
+        endvar/.style={circle, draw=green!60!black, fill=green!10, thick, minimum size=1.1cm, inner sep=0pt, font=\small\bfseries},
+        arrow/.style={-Latex, thick, blue!70!black},
+        header/.style={font=\footnotesize\bfseries, text=gray, align=center}
+    ]
+        % Column Headers
+        \node[header] at (0, 3) {Loss};
+        \node[header] at (2.2, 3) {Phase 1};
+        \node[header] at (4.6, 3) {Phase 2};
+        \node[header] at (7.2, 3) {Phase 3};
+        \node[header] at (9.6, 3) {Phase 4};
+        \node[header] at (12, 3) {Phase 5};
+        
+        % Draw light vertical separators to distinguish phases
+        \foreach \x in {1.1, 3.4, 5.9, 8.4, 10.8} {
+            \draw[dashed, gray!30] (\x, 3.3) -- (\x, -3.8);
+        }
+
+        % --- Nodes ---
+        \node[varfirst] (L) at (0, 0.3) {$L$};
+        \node[var] (Cp) at (2.2, 0.3) {$C_p$};
+        
+        \node[endvar] (ci) at (4.6, 1.8) {$c_i$};
+        \node[var] (alpha) at (4.6, -0.7) {$\alpha_i$};
+        
+        \node[var] (mu2D) at (7.2, 0.8) {$\mu_{2D}$};
+        \node[var] (Sigma2D) at (7.2, -0.7) {$\Sigma_{2D}$};
+        \node[var] (o) at (7.2, -2.2) {$o$};
+        
+        \node[endvar] (mu3D) at (9.6, 0.8) {$\mu_{3D}$};
+        \node[var] (Sigma3D) at (9.6, -0.7) {$\Sigma_{3D}$};
+        
+        \node[endvar] (sraw) at (12, 0.1) {$s_{raw}$};
+        \node[endvar] (qraw) at (12, -1.5) {$q_{raw}$};
+        \node[endvar] (oraw) at (12, -2.9) {$o_{raw}$};
+        
+        % --- Edges (Gradient Flow) ---
+        \draw[arrow] (L) -- (Cp);
+        \draw[arrow] (Cp) -- (ci);
+        \draw[arrow] (Cp) -- (alpha);
+        \draw[arrow] (alpha) -- (mu2D);
+        \draw[arrow] (alpha) -- (Sigma2D);
+        \draw[arrow] (alpha) -- (o);
+        \draw[arrow] (mu2D) -- (mu3D);
+        \draw[arrow] (Sigma2D) -- (Sigma3D);
+        \draw[arrow] (Sigma3D) -- (sraw);
+        \draw[arrow] (Sigma3D) -- (qraw);
+        \draw[arrow] (o) -- (oraw);
+        
+        % --- Legend ---
+        \node[var, minimum size=0.5cm] at (1.5, -3.4) {};
+        \node[right, font=\scriptsize] at (1.8, -3.4) {Intermediate Gradient};
+        
+        \node[endvar, minimum size=0.5cm] at (6.5, -3.4) {};
+        \node[right, font=\scriptsize] at (6.8, -3.4) {Final Attribute Gradient};
+        
+    \end{tikzpicture}%
+    }
 \end{frame}
 
+\begin{frame}{Backward Pass: Loss Function \& Phase 1}
+    \textbf{The Loss Function}
+    \begin{itemize}
+        \item Training compares the rendered image with the original input image using a weighted combination of $\mathcal{L}_1$ loss and D-SSIM.
+        \item $\mathcal{L}_1$ calculates the absolute pixel-wise error, while D-SSIM acts as a structural regularizer:
+        $$\darkmathhighlight{ L = (1-\lambda)\cdot\mathcal{L}_1 + \lambda\cdot\mathcal{L}_{D-SSIM}, \quad \text{with } \lambda=0.2 }$$
+    \end{itemize}
 
-\begin{frame}{Phase 1: Loss to Pixel Color Correction}
-    
+    \pause
+    \vspace{1em}
+
+    \textbf{Phase 1: Loss to Pixel Color Correction}
+    \begin{itemize}
+        \item The gradient calculates the required color correction per pixel ($C_p$).
+        \item A positive gradient indicates an overestimation of color, negative indicates underestimation, and the magnitude dictates the degree of adjustment required:
+        $$\darkmathhighlight{ \frac{\partial L}{\partial C_p} = \frac{1-\lambda}{N} \cdot sign(C_p - O_p) + \lambda \frac{\partial \mathcal{L}_{D-SSIM}}{\partial C_p} }$$
+    \end{itemize}
 \end{frame}
 
+\begin{frame}{Backward Pass: Phase 2}
+    \textbf{Phase 2: Pixel Color Correction to 2D Splat}
+    \begin{itemize}
+        \item The algorithm works alpha compositing backwards, flowing the pixel gradient into the evaluated opacity ($\alpha_i$) and color ($c_i$) of each 2D Gaussian in the tile.
+    \end{itemize}
 
-\begin{frame}{Phase 2: Pixel Color Correction to 2D Splat}
-    
+    \pause
+    \vspace{0.5em}
+
+    \begin{itemize}
+        \item \textbf{Color Gradient:} Uses the chain rule to update the Gaussian's color based on its contribution (transmittance $T_i$ and opacity $\alpha_i$):
+        $$ \text{with} \hspace{1mm} C_{p} = \sum_{i=1}^{N} c_i \alpha_i T_i: \hspace{4mm}
+        \darkmathhighlight{
+            \frac{\partial L}{\partial c_i} = 
+            \frac{\partial L}{\partial C_p} \cdot \frac{\partial C_p}{\partial c_i} = 
+            \frac{\partial L}{\partial C_p} \cdot (\alpha_i T_i)}  $$
+    \end{itemize}
+
+    \pause
+    \vspace{0.5em}
+
+    \begin{itemize}
+        \item \textbf{Opacity Gradient:} Increases evaluated opacity if the Gaussian's color ($c_i$) reduces the pixel error more effectively than the accumulated background color behind it ($C_{behind}$):
+        $$ \darkmathhighlight{
+            \frac{\partial L}{\partial \alpha_i} = 
+            \frac{\partial L}{\partial C_p} \cdot \frac{\partial C_p}{\partial \alpha_i} = 
+            \frac{\partial L}{\partial C_p} \cdot T_i (c_i - C_{behind})} $$
+    \end{itemize}
 \end{frame}
 
+\againframe{gradient_flow}
 
-\begin{frame}{Phase 3: 2D Splat to 2D Geometry}
-    
+\begin{frame}{Backward Pass: Phases 3 to 5}
+    \textbf{Phase 3: 2D Splat to 2D Geometry}
+    \begin{itemize}
+        \item The opacity gradients are used to adjust the physical properties of the 2D Gaussians.
+        \item This mathematically pulls the center position of the 2D Gaussian towards the pixel and stretches or contracts its 2D shape to minimize the error.
+    \end{itemize}
+
+    \pause
+    \vspace{1em}
+
+    \textbf{Phase 4: 2D Geometry to 3D Geometry}
+    \begin{itemize}
+        \item The GPU model changes from pixel-based to running per-Gaussian calculations.
+        \item The 2D gradients are unprojected back into 3D space, translating the 2D adjustments into 3D center movements and 3D volume changes.
+    \end{itemize}
+
+    \pause
+    \vspace{1em}
+
+    \textbf{Phase 5: 3D Geometry to 3D Gaussian Attributes}
+    \begin{itemize}
+        \item Finally, the gradients flow backward through the 3D covariance matrix assembly.
+        \item Adjustments are mapped directly into the raw, latent space variables for scale, rotation, and base opacity.
+    \end{itemize}
 \end{frame}
 
+\begin{frame}{Adaptive Density Control \& Optimization}
+    \textbf{Adaptive Density Control}
+    \begin{itemize}
+        \item Steps in every 100 iterations to counter over-reconstruction (covering too much geometry) and under-reconstruction (too few Gaussians).
+        \item \textbf{Splitting:} Over-reconstructing Gaussians are split into two smaller ones.
+        \item \textbf{Cloning:} Under-reconstructing Gaussians are cloned.
+    \end{itemize}
 
-\begin{frame}{Phase 4: 2D Geometry to 3D Geometry}
-    
+    \pause
+    \vspace{0.5em}
+
+    \textbf{Pruning \& Opacity Reset}
+    \begin{itemize}
+        \item 3D Gaussians with extremely low opacity or unbound scale are routinely deleted.
+        \item Every 3,000 iterations, the base opacity is reset to almost 0 for all Gaussians. This forces unimportant Gaussians to fade out completely and be pruned.
+    \end{itemize}
+
+    \pause
+    \vspace{0.5em}
+
+    \textbf{Optimization Step}
+    \begin{itemize}
+        \item Rather than standard gradient descent, 3DGS utilizes the Adam optimizer.
+        \item Adam takes each parameter's history into account, smoothing out updates so that 3D Gaussians gently morph into their correct geometric shapes.
+    \end{itemize}
 \end{frame}
 
-
-\begin{frame}{Phase 5: 3D Geometry to 3D Gaussian Attributes}
-    
-\end{frame}
-
-
-\begin{frame}{Adaptive Density Control \& Optimization Step}
-    
-\end{frame}
+\againframe{training_cycle}
