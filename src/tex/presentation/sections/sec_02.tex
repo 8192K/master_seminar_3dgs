@@ -1,10 +1,93 @@
 \section{3D Gaussian Data Structure}
 
 \begin{frame}{Attributes}
+   \centering
+    \vspace{-0.5cm}
+    \begin{tikzpicture}
+        % 1. The True Fuzzy 3D Gaussian (Dark Green)
+        % Spans 9cm wide and 4.4cm tall, heavily filling the slide
+        \only<1->{
+            \drawfuzzygaussian{0,0}{6.75}{3.3}{15}{green!50!black}
+        }
 
+        % 2. Position (\mu)
+        \node<2->[circle, fill=black, inner sep=1.5pt] (mu) at (0,0) {};
+        \node<2->[above left, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
+            at (-0.1, 0.1) {Position $\mu$};
+
+        % 3. Opacity (o)
+        \node<3->[below right, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
+            at (-0.3, -0.3) {Peak Opacity $o$};
+
+        % 5. Covariance Matrix (\Sigma)
+        \begin{scope}[rotate=15]
+            \draw<4->[-Latex, very thick, blue!80!black] 
+                (0,0) -- (4.5, 0) node[midway, below, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt, yshift=-0.3cm, font=\bfseries] {Covariance Matrix $\Sigma$};
+            \draw<4->[-Latex, very thick, blue!80!black] (0,0) -- (0, 2.2);
+        \end{scope}
+
+        % 4. 3-Sigma Bounding Box
+        \begin{scope}[rotate=15]
+            \draw<6->[dashed, very thick, red!80!black] (0,0) ellipse (4.5 and 2.2);
+            \node<6->[red!80!black, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
+                at (4.2, 1.8) {$3\sigma$ Bound};
+        \end{scope}
+    \end{tikzpicture}
+
+    %\vspace{1em}
+    
+    % 6. The Opacity Distribution Formula (using \only to fix rendering)
+    \only<5->{
+        \vspace{-2.1cm}
+        $$ \darkmathhighlight{\text{Multivariate Normal Distribution:}\hspace{0.2cm}\alpha(p)=o\cdot exp\left(-\frac{1}{2}(p-\mu)^{T}\Sigma^{-1}(p-\mu)\right)} $$
+    }
 \end{frame}
 
 
 \begin{frame}{3D Gaussian Covariance Matrix Decomposition}
+    \begin{columns}[T]
+        % Left Column: Spotlighted Concepts
+        \begin{column}{0.35\textwidth}
+            \textbf{Mathematical Setup}
+            \vspace{1em}
+            
+            \alt<1>{\textbf{\textcolor{blue}{The Validity Problem}}}{\textcolor{gray}{The Validity Problem}}\par\vspace{1em}
+            \alt<2>{\textbf{\textcolor{blue}{Core Decomposition}}}{\textcolor{gray}{Core Decomposition}}\par\vspace{1em}
+            \alt<3>{\textbf{\textcolor{blue}{Scaling Values}}}{\textcolor{gray}{Scaling Values}}\par\vspace{1em}
+            \alt<4>{\textbf{\textcolor{blue}{Rotational Quaternion}}}{\textcolor{gray}{Rotational Quaternion}}\par\vspace{1em}
+            \alt<5>{\textbf{\textcolor{blue}{Guaranteed Validity}}}{\textcolor{gray}{Guaranteed Validity}}
+        \end{column}
 
+        % Right Column: Synchronized Explanations
+        \begin{column}{0.6\textwidth}
+            \justifying 
+            \textbf{Details}
+            \vspace{1em}
+            
+            \only<1>{
+                To work with gradient descent, the covariance matrix $\Sigma$ must be differentiable and remain positive semi-definite (eigenvalues $\ge 0$).\\Running a loop during backpropagation to find valid values is computationally too costly.
+            }
+            \only<2>{
+                Kerbl et al. bypassed this by decomposing $\Sigma$ into a scaling matrix $S$ and rotational matrix~$R$ mirroring standard eigendecomposition ($\Sigma=Q\Delta Q^{T}$):
+                $$ \Sigma = RSS^{T}R^{T} $$
+            }
+            \only<3>{
+                The diagonal scaling matrix $S$ is further decomposed into three distinct scaling values $(s_{1}, s_{2}, s_{3})$. These represent the roots of the eigenvalues of $\Sigma$.
+            }
+            \only<4>{
+                The rotational matrix $R$ is decomposed into a four-value quaternion $(w, x, y, z)$:\\
+                \vspace{1em}
+                \resizebox{\linewidth}{!}{%
+                $ R = \begin{bmatrix}
+                1-2(y^{2}+z^{2}) & 2(xy-wz) & 2(xz+wy) \\
+                2(xy+wz) & 1-2(x^{2}+z^{2}) & 2(yz-wx) \\
+                2(xz-wy) & 2(yz+wx) & 1-2(x^{2}+y^{2})
+                \end{bmatrix} $
+                }
+            }
+            \only<5>{
+                3DGS only stores and optimizes these 7 specific values for each 3D Gaussian.\\Because an eigendecomposition is always positive semi-definite, constructing a new covariance matrix from these components is guaranteed to be geometrically valid.
+            }
+        \end{column}
+    \end{columns}
 \end{frame}
