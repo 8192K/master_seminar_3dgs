@@ -69,7 +69,7 @@
             }
             \only<2>{
                 Kerbl et al. bypassed this by decomposing $\Sigma$ into a scaling matrix $S$ and rotational matrix~$R$ mirroring standard eigendecomposition ($\Sigma=Q\Delta Q^{T}$):
-                $$ \Sigma = RSS^{T}R^{T} $$
+                $$ \darkmathhighlight{\Sigma = RSS^{T}R^{T} }$$
             }
             \only<3>{
                 The diagonal scaling matrix $S$ is further decomposed into three distinct scaling values $(s_{1}, s_{2}, s_{3})$. These represent the roots of the eigenvalues of $\Sigma$.
@@ -78,11 +78,11 @@
                 The rotational matrix $R$ is decomposed into a four-value quaternion $(w, x, y, z)$:\\
                 \vspace{1em}
                 \resizebox{\linewidth}{!}{%
-                $ R = \begin{bmatrix}
+                $ \darkmathhighlight{R = \begin{bmatrix}
                 1-2(y^{2}+z^{2}) & 2(xy-wz) & 2(xz+wy) \\
                 2(xy+wz) & 1-2(x^{2}+z^{2}) & 2(yz-wx) \\
                 2(xz-wy) & 2(yz+wx) & 1-2(x^{2}+y^{2})
-                \end{bmatrix} $
+                \end{bmatrix}} $
                 }
             }
             \only<5>{

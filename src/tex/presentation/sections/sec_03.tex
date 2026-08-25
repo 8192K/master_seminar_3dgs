@@ -1,46 +1,176 @@
-\skipsecframetrue
+%\skipsecframetrue
 \section{Training Procedure}
+
+\begin{frame}{The Training Cycle}
+   \centering
+    
+    % Wraps the TikZ diagram to ensure it fits the slide width perfectly
+    \hspace*{-5mm}
+    \begin{tikzpicture}[
+        box/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=2.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
+        decision/.style={diamond, draw=blue!60!black, fill=blue!10, thick, align=center, aspect=1.4, font=\scriptsize\bfseries, inner sep=1pt},
+        arrow/.style={-Latex, thick, blue!70!black, rounded corners=4pt}
+    ]
+        % Main horizontal axis (Y = 0)
+        \node[box] (init) at (-0.5, 0) {Initialization \\ (Point Cloud)};
+        \node[box] (select) at (3, 0) {1. Select Image \\ \& Camera Pose};
+        \node[decision] (loss) at (8, 0) {3. Loss Function \\ Converged?};
+        \node[box, fill=green!10, draw=green!50!black] (end) at (11.5, 0) {Final \\ 3D Scene};
+        
+        % Top and Bottom nodes forming the loop
+        \node[box] (forward) at (5.5, 2.5) {2. Forward Pass \\ (Render Image)};
+        \node[box] (backward) at (5.5, -2.5) {4. Backward Pass \\ (Update Attributes)};
+        
+        % Horizontal entry and exit arrows
+        \draw[arrow] (init.east) -- (select.west);
+        \draw[arrow] (loss.east) -- node[above, font=\tiny, text=blue!80!black] {Yes} (end.west);
+        
+        % Arrows forming the rectangular loop (|- and -| create the 90-degree corners)
+        \draw[arrow] (select.north) |- (forward.west);
+        \draw[arrow] (forward.east) -| (loss.north);
+        \draw[arrow] (loss.south) |- node[pos=0.25, right, font=\tiny, text=blue!80!black] {No} (backward.east);
+        \draw[arrow] (backward.west) -| (select.south);
+        
+    \end{tikzpicture}%
+    
+\end{frame}
 
 \subsection{Point Cloud Initialization}
 
 \begin{frame}{Point Cloud Initialization}
-    
+    \begin{columns}[T]
+        % Left Column: Spotlighted Concepts (0.35 split)
+        \begin{column}{0.35\textwidth}
+            \textbf{Initialization Steps}
+            \vspace{1em}
+            
+            \alt<1>{\textbf{\textcolor{blue}{Structure from Motion}}}{\textcolor{gray}{Structure from Motion}}\par\vspace{1em}
+            \alt<2>{\textbf{\textcolor{blue}{Camera Matrix}}}{\textcolor{gray}{Camera Matrix}}\par\vspace{1em}
+            \alt<3>{\textbf{\textcolor{blue}{Primitive Initialization}}}{\textcolor{gray}{Primitive Initialization}}
+        \end{column}
+
+        % Right Column: Synchronized Explanations (0.6 split)
+        \begin{column}{0.6\textwidth}
+            \justifying 
+            \textbf{Details}
+            \vspace{1em}
+            
+            \only<1>{
+                The 3DGS algorithm requires initial geometry, which is commonly derived from a set of input images.\\Because camera poses are usually unknown, Structure from Motion (SfM) software like COLMAP is used to solve a geometric optimization problem, providing an accurate 3D point cloud.
+            }
+            \only<2>{
+                As another result from SfM, each input image is assigned a $3\times3$ camera matrix~$W_{rot}$ which contains the camera's orientation in world space as well as its position~$t_{trans}$.
+            }
+            \only<3>{
+                The SfM points act as the origins for the initial 3D Gaussians. 
+                \begin{itemize}
+                    \item They are initialized as perfect spheres.
+                    \item Radii are deduced from their three nearest neighbors.
+                    \item Opacity is set to $0.1$ and color to any RGB value.
+                \end{itemize}
+            }
+        \end{column}
+    \end{columns}
 \end{frame}
 
 
 \subsection{Forward Pass}
 
-\begin{frame}{Phase 1: Preparing Attributes}
+%\begin{frame}{Phase 1: Preparing Attributes}
+\begin{frame}{Forward Pass: Phases 1 \& 2}
+    The GPU is running one GPU thread per 3D Gaussian.
+
+    \vspace{1em}
+
+    \pause
+    \textbf{Phase 1: Preparing Constituent Attributes}
+    \begin{itemize}
+        \item Raw values optimized during training are converted from latent space back into physical space.
+        \item Opacity is bounded to $(0,1)$ using a sigmoid function, scale uses the exponential function, and the rotational quaternion is normalized.
+    \end{itemize}
     
+    \vspace{1em}
+    
+    \pause
+    \textbf{Phase 2: Reconstructing the 3D Covariance Matrix}
+    \begin{itemize}
+        \item The algorithm mathematically rebuilds the 3D geometric shape.
+        \item It combines the scaling matrix $S$ and rotational matrix $R$ to form the full 3D covariance matrix:
+        $$ \darkmathhighlight{\Sigma_{3D} = RSS^{T}R^{T}} $$
+    \end{itemize}
 \end{frame}
 
-\begin{frame}{Phase 2: Reconstructing the 3D Covariance Matrix}
+\begin{frame}{Forward Pass: Phase 3}
+    % Overlay 1: Text only
+    \only<1>{
+        \textbf{Phase 3: Projection from 3D to 2D}
+        \begin{itemize}
+            \item Converts 3D Gaussians (ellipsoids) in world space into flat 2D Gaussians (ellipses) in image space.
+            \item Employs a linear affine approximation (the Jacobian matrix $J$) of a standard non-linear pinhole projection.
+            \item The 3D matrix is rotated into view space via $W_{rot}$ and then projected:
+            $$ \darkmathhighlight{\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^{T} J^{T}} $$
+        \end{itemize}
+    }
     
+    % Overlay 2: Graphic only (replaces the text on the same frame number)
+    \only<2>{
+        \begin{figure}
+            \centering
+            % Replace the TikZ dashed box below with: \includegraphics[width=0.9\linewidth]{your_image.png}
+            \begin{tikzpicture}
+                \draw[dashed, gray, thick] (0,0) rectangle (9, 5) 
+                    node[midway, font=\large\bfseries, text=gray] {Insert Graphic: 3D to 2D Projection};
+            \end{tikzpicture}
+        \end{figure}
+    }
 \end{frame}
 
-
-\begin{frame}{Phase 3: Projection from 3D to 2D}
+\begin{frame}{Forward Pass: Phases 4 \& 5}
+    \textbf{Phase 4: Preparing Radix Sort}
+    \begin{itemize}
+        \item The target output image is divided into a grid of $16\times16$ pixel tiles.
+        \item The algorithm calculates a 2D bounding box to map exactly which tiles a given 2D Gaussian covers.
+    \end{itemize}
     
+    \vspace{1em}
+    
+    \pause
+    \textbf{Phase 5: Global Radix Sort}
+    \begin{itemize}
+        \item The GPU waits until all per-Gaussian computations are finished.
+        \item A highly optimized Radix Sort is executed, organizing the 2D Gaussians for each tile strictly by depth (closest to farthest).
+    \end{itemize}
 \end{frame}
 
-
-\begin{frame}{Phase 4: Preparing Radix Sort}
+\begin{frame}{Forward Pass: Phase 6}
+    % Overlay 1: Text only
+    \only<1>{
+        \textbf{Phase 6: Tile-Based Rasterization}
+        \begin{itemize}
+            \item Operating natively in 2D image space, the GPU assigns one processing thread per pixel.
+            \item \textbf{Alpha Compositing:} Pixels accumulate color by blending the sorted list of overlapping 2D Gaussians front-to-back:
+            $$
+             \darkmathhighlight{
+                C_{p} = \sum_{i=1}^{N} c_i \alpha_i T_i,
+                \hspace{0.5cm} \text{with} \hspace{0.5cm}
+                T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)
+                \hspace{0.5cm} \text{the transmittance}}
+            $$
+            \item \textbf{Early Stopping:} Threads stop calculating exactly when transmittance ($T_i$) drops near zero, ignoring hidden geometry for massive speed-ups.
+        \end{itemize}
+    }
     
-\end{frame}
-
-
-\begin{frame}{Phase 5: Global Radix Sort}
-    
-\end{frame}
-
-
-\begin{frame}{Phase 6: Tile-Based Rasterization}
-    
-\end{frame}
-
-
-\begin{frame}{Summary}
-    
+    % Overlay 2: Graphic only (replaces the text on the same frame number)
+    \only<2>{
+        \begin{figure}
+            \centering
+            % Replace the TikZ dashed box below with: \includegraphics[width=0.9\linewidth]{your_image.png}
+            \begin{tikzpicture}
+                \draw[dashed, gray, thick] (0,0) rectangle (9, 5) 
+                    node[midway, font=\large\bfseries, text=gray, align=center] {Insert Graphic: \\ Alpha Compositing \& Early Stopping};
+            \end{tikzpicture}
+        \end{figure}
+    }
 \end{frame}
 
 
