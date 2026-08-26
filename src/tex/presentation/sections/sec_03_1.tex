@@ -154,7 +154,7 @@
                 % 2. MAPPING / PROJECTION ARROW
                 % ==========================================
                 \draw[-Latex, line width=1.5mm, gray!60] (2.2, 0) -- (5.5, 0) 
-                    node[midway, above, font=\large\bfseries, text=blue!80!black, align=center, yshift=2mm] {Projection \\ (Jacobian $J$)};
+                    node[midway, above, font=\large\bfseries, text=blue!80!black, align=center, yshift=2mm] {Projection \\ (Jacobian J)};
 
 
                 % ==========================================
@@ -171,7 +171,7 @@
                     \draw[blue!60, very thick, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
 
                     % Label for Image Space (Rotation inherits from scope)
-                    \node[blue!80!black, font=\Large\bfseries, anchor=south] at (0, 3) {2D Image Space (Pixels)};
+                    \node[blue!80!black, font=\Large\bfseries, anchor=south] at (0, 3) {2D Image Space};
 
                     % 2D Fuzzy Blob (Flattened via projection)
                     \foreach \i in {1,2,3,4,5,6} {
@@ -204,6 +204,7 @@
             \justifying
             \item The target output image is divided into a grid of $16\times16$ pixel tiles.
             \item The algorithm calculates a 2D bounding box to map exactly which tiles a given 2D Gaussian covers.
+            \item Assigns each 2D Gaussian to a tile. If overlapping, assigns to all affected tiles.
         \end{itemize}
         
         \vspace{1em}
@@ -246,7 +247,7 @@
                 
                 % 4. LABELS FOR TILES
                 \node[blue!80!black, font=\Large\bfseries, anchor=north west] at (0.2, -0.2) {16$\times$16 Pixel Tile};
-                \node[gray!60!black, font=\small\bfseries, anchor=north west] at (0.2, -8.2) {Adjacent tiles};
+                \node[gray!60!black, font=\small\bfseries, anchor=north west] at (0.2, -8.225) {Adjacent Tiles};
 
                 
                 % ==========================================
@@ -270,7 +271,7 @@
                 \draw[red!80!black, thick, dashed] (1.44, -2.73) rectangle (4.56, -5.27);
                 % Calculated tight bounding box
                 \draw[red!80!black, thick, dashed] (2.84, -1.75) rectangle (5.56, -3.85);
-                \node[red!80!black, font=\footnotesize\bfseries, anchor=north] at (2.5, -5.27) {Bounding boxes};
+                \node[red!80!black, font=\footnotesize\bfseries, anchor=north] at (2.6, -5.27) {Bounding Boxes};
 
 
                 % --- GAUSSIAN 2: Overlapping Boundary ---
@@ -284,7 +285,7 @@
                 
                 % Annotation for the boundary overlap
                 \draw[-Latex, thick, purple!80!black] (6.5, -7.6) -- (8.1, -7.3);
-                \node[font=\footnotesize\bfseries, purple!80!black, align=center, anchor=north] at (6.3, -7.55) {Box overlaps boundary\\(assigned to both tiles)};
+                \node[font=\footnotesize\bfseries, purple!80!black, align=center, anchor=north] at (6.2, -7.55) {Box overlaps boundary\\(assigned to both tiles)};
 
 
                 % --- GAUSSIAN 3: Completely Outside ---
@@ -309,7 +310,7 @@
 \begin{frame}{Forward Pass: Phase 6}
     % Overlay 1: Text only
     \only<1>{
-        \textbf{Phase 6: Tile-Based Rasterization}
+        \textbf{Phase 6: Tile-Based Rasterization (Splatting)}
         \begin{itemize}
             \justifying
             \item Operating natively in 2D image space, the GPU assigns one processing thread per pixel.
