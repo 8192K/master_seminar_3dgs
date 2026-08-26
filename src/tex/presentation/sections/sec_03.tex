@@ -63,6 +63,7 @@
             \only<3>{
                 The SfM points act as the origins for the initial 3D Gaussians. 
                 \begin{itemize}
+                    \justifying
                     \item They are initialized as perfect spheres.
                     \item Radii are deduced from their three nearest neighbors.
                     \item Opacity is set to $0.1$ and color to any RGB value.
@@ -86,6 +87,7 @@
     \pause
     \textbf{Phase 1: Preparing Constituent Attributes}
     \begin{itemize}
+        \justifying
         \item Raw values optimized during training are converted from latent space back into physical space.
         \item Opacity is bounded to $(0,1)$ using a sigmoid function, scale uses the exponential function, and the rotational quaternion is normalized.
     \end{itemize}
@@ -95,6 +97,7 @@
     \pause
     \textbf{Phase 2: Reconstructing the 3D Covariance Matrix}
     \begin{itemize}
+        \justifying
         \item The algorithm mathematically rebuilds the 3D geometric shape.
         \item It combines the scaling matrix $S$ and rotational matrix $R$ to form the full 3D covariance matrix:
         $$ \darkmathhighlight{\Sigma_{3D} = RSS^{T}R^{T}} $$
@@ -106,6 +109,7 @@
     \only<1>{
         \textbf{Phase 3: Projection from 3D to 2D}
         \begin{itemize}
+            \justifying
             \item Converts 3D Gaussians (ellipsoids) in world space into flat 2D Gaussians (ellipses) in image space.
             \item Employs a linear affine approximation (the Jacobian matrix $J$) of a standard non-linear pinhole projection.
             \item The 3D matrix is rotated into view space via $W_{rot}$ and then projected:
@@ -196,6 +200,7 @@
 \begin{frame}{Forward Pass: Phases 4 \& 5}
     \textbf{Phase 4: Preparing Radix Sort}
     \begin{itemize}
+        \justifying
         \item The target output image is divided into a grid of $16\times16$ pixel tiles.
         \item The algorithm calculates a 2D bounding box to map exactly which tiles a given 2D Gaussian covers.
     \end{itemize}
@@ -205,6 +210,7 @@
     \pause
     \textbf{Phase 5: Global Radix Sort}
     \begin{itemize}
+        \justifying
         \item The GPU waits until all per-Gaussian computations are finished.
         \item A highly optimized Radix Sort is executed, organizing the 2D Gaussians for each tile strictly by depth (closest to farthest).
     \end{itemize}
@@ -215,6 +221,7 @@
     \only<1>{
         \textbf{Phase 6: Tile-Based Rasterization}
         \begin{itemize}
+            \justifying
             \item Operating natively in 2D image space, the GPU assigns one processing thread per pixel.
             \item \textbf{Alpha Compositing:} Pixels accumulate color by blending the sorted list of overlapping 2D Gaussians front-to-back:
             $$
@@ -238,7 +245,7 @@
                 
                 % 1. Mathematically derived blended color from alpha compositing
                 % C_p = (0.4 * Red) + (0.5 * 0.6 * Green) + (0.8 * 0.3 * Blue)
-                \definecolor{blendedColor}{rgb}{0.4, 0.3, 0.24}
+                \definecolor{blendedColor}{rgb}{0.64, 0.54, 0.0}
                 
                 % 2. The Target Pixel on the View Plane
                 \draw[thick, blue!60!black, fill=blendedColor] (-2.5, -1.2) rectangle (-0.5, 1.2);
@@ -253,23 +260,32 @@
                 \draw[-Latex, very thick, gray] (pixel) -- (16.5, 0) node[right, font=\Large\bfseries] {Depth};
                 
                 % 4. Sorted 2D Gaussians (Alpha Compositing)
-                % Splat 1
-                \fill[red, opacity=0.4] (2.5, 0) ellipse (0.6 and 1.2);
+                % Splat 1 (Target alpha 0.4 -> ~0.09 per layer)
+                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                    \fill[red, opacity=0.09] (2.5, 0) ellipse ({0.6*\s} and {1.2*\s});
+                }
                 \draw[red!80!black, thick] (2.5, 0) ellipse (0.6 and 1.2);
+                \node[circle, fill=black!80, inner sep=1.2pt] at (2.5, 0) {}; % Piercing dot
                 \node[above, font=\large\bfseries] at (2.5, 1.4) {Gaussian 1};
                 \node[below, font=\normalsize, align=center] at (2.5, -1.3) {Opacity \\ $\alpha_1=0.4$};
                 \node[below, font=\normalsize\bfseries, text=blue!70!black] at (2.5, -2.3) {$T_1=1.00$};
                 
-                % Splat 2
-                \fill[green, opacity=0.5] (6, 0.3) ellipse (0.7 and 1.3);
+                % Splat 2 (Target alpha 0.5 -> ~0.12 per layer)
+                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                    \fill[green, opacity=0.12] (6, 0.3) ellipse ({0.7*\s} and {1.3*\s});
+                }
                 \draw[green!80!black, thick] (6, 0.3) ellipse (0.7 and 1.3);
+                \node[circle, fill=black!80, inner sep=1.2pt] at (6, 0) {}; % Piercing dot
                 \node[above, font=\large\bfseries] at (6, 1.8) {Gaussian 2};
                 \node[below, font=\normalsize, align=center] at (6, -1.3) {Opacity \\ $\alpha_2=0.5$};
                 \node[below, font=\normalsize\bfseries, text=blue!70!black] at (6, -2.3) {$T_2=0.60$};
                 
-                % Splat 3
-                \fill[blue, opacity=0.8] (9.5, -0.2) ellipse (0.5 and 1.0);
-                \draw[blue!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
+                % Splat 3 (Target alpha 0.8 -> ~0.27 per layer)
+                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                    \fill[yellow, opacity=0.27] (9.5, -0.2) ellipse ({0.5*\s} and {1.0*\s});
+                }
+                \draw[yellow!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
+                \node[circle, fill=black!80, inner sep=1.2pt] at (9.5, 0) {}; % Piercing dot
                 \node[above, font=\large\bfseries] at (9.5, 1.2) {Gaussian 3};
                 \node[below, font=\normalsize, align=center] at (9.5, -1.3) {Opacity \\ $\alpha_3=0.8$};
                 \node[below, font=\normalsize\bfseries, text=blue!70!black] at (9.5, -2.3) {$T_3=0.30$};
@@ -279,12 +295,20 @@
                 \node[red, font=\Large\bfseries, rotate=90] at (12, 0) {Early Stopping ($T_4 = 0.06 \approx 0$)};
                 
                 % 6. Culled / Ignored Geometry
-                \fill[gray, opacity=0.3] (13.5, 0.4) ellipse (0.6 and 1.1);
+                % Splat 4 (Ignored)
+                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                    \fill[gray, opacity=0.07] (13.5, 0.4) ellipse ({0.6*\s} and {1.1*\s});
+                }
                 \draw[gray, dashed, thick] (13.5, 0.4) ellipse (0.6 and 1.1);
+                \node[circle, fill=gray!80!black, inner sep=1.2pt] at (13.5, 0) {}; % Piercing dot
                 \node[above, font=\large\bfseries, text=gray] at (13.5, 1.7) {Gaussian 4};
                 
-                \fill[gray, opacity=0.2] (15, -0.3) ellipse (0.7 and 0.9);
+                % Splat 5 (Ignored)
+                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                    \fill[gray, opacity=0.04] (15, -0.3) ellipse ({0.7*\s} and {0.9*\s});
+                }
                 \draw[gray, dashed, thick] (15, -0.3) ellipse (0.7 and 0.9);
+                \node[circle, fill=gray!80!black, inner sep=1.2pt] at (15, 0) {}; % Piercing dot
                 \node[above, font=\large\bfseries, text=gray] at (15.2, 0.8) {Gaussian 5};
                 
                 \node[text=gray, font=\Large\bfseries, align=center] at (14.25, -1.9) {Geometry\\Ignored};
@@ -368,6 +392,7 @@
 \begin{frame}{Backward Pass: Loss Function \& Phase 1}
     \textbf{The Loss Function}
     \begin{itemize}
+        \justifying
         \item Training compares the rendered image with the original input image using a weighted combination of $\mathcal{L}_1$ loss and D-SSIM.
         \item $\mathcal{L}_1$ calculates the absolute pixel-wise error, while D-SSIM acts as a structural regularizer:
         $$\darkmathhighlight{ L = (1-\lambda)\cdot\mathcal{L}_1 + \lambda\cdot\mathcal{L}_{D-SSIM}, \quad \text{with } \lambda=0.2 }$$
@@ -378,6 +403,7 @@
 
     \textbf{Phase 1: Loss to Pixel Color Correction}
     \begin{itemize}
+        \justifying
         \item The gradient calculates the required color correction per pixel ($C_p$).
         \item A positive gradient indicates an overestimation of color, negative indicates underestimation, and the magnitude dictates the degree of adjustment required:
         $$\darkmathhighlight{ \frac{\partial L}{\partial C_p} = \frac{1-\lambda}{N} \cdot sign(C_p - O_p) + \lambda \frac{\partial \mathcal{L}_{D-SSIM}}{\partial C_p} }$$
@@ -387,6 +413,7 @@
 \begin{frame}{Backward Pass: Phase 2}
     \textbf{Phase 2: Pixel Color Correction to 2D Splat}
     \begin{itemize}
+        \justifying
         \item The algorithm works alpha compositing backwards, flowing the pixel gradient into the evaluated opacity ($\alpha_i$) and color ($c_i$) of each 2D Gaussian in the tile.
     \end{itemize}
 
@@ -394,6 +421,7 @@
     \vspace{0.5em}
 
     \begin{itemize}
+        \justifying
         \item \textbf{Color Gradient:} Uses the chain rule to update the Gaussian's color based on its contribution (transmittance $T_i$ and opacity $\alpha_i$):
         $$ \text{with} \hspace{1mm} C_{p} = \sum_{i=1}^{N} c_i \alpha_i T_i: \hspace{4mm}
         \darkmathhighlight{
@@ -406,6 +434,7 @@
     \vspace{0.5em}
 
     \begin{itemize}
+        \justifying
         \item \textbf{Opacity Gradient:} Increases evaluated opacity if the Gaussian's color ($c_i$) reduces the pixel error more effectively than the accumulated background color behind it ($C_{behind}$):
         $$ \darkmathhighlight{
             \frac{\partial L}{\partial \alpha_i} = 
@@ -419,6 +448,7 @@
 \begin{frame}{Backward Pass: Phases 3 to 5}
     \textbf{Phase 3: 2D Splat to 2D Geometry}
     \begin{itemize}
+        \justifying
         \item The opacity gradients are used to adjust the physical properties of the 2D Gaussians.
         \item This mathematically pulls the center position of the 2D Gaussian towards the pixel and stretches or contracts its 2D shape to minimize the error.
     \end{itemize}
@@ -428,6 +458,7 @@
 
     \textbf{Phase 4: 2D Geometry to 3D Geometry}
     \begin{itemize}
+        \justifying
         \item The GPU model changes from pixel-based to running per-Gaussian calculations.
         \item The 2D gradients are unprojected back into 3D space, translating the 2D adjustments into 3D center movements and 3D volume changes.
     \end{itemize}
@@ -437,7 +468,8 @@
 
     \textbf{Phase 5: 3D Geometry to 3D Gaussian Attributes}
     \begin{itemize}
-        \item Finally, the gradients flow backward through the 3D covariance matrix assembly.
+        \justifying
+        \item The gradients flow backward through the 3D covariance matrix assembly.
         \item Adjustments are mapped directly into the raw, latent space variables for scale, rotation, and base opacity.
     \end{itemize}
 \end{frame}
@@ -445,6 +477,7 @@
 \begin{frame}{Adaptive Density Control \& Optimization}
     \textbf{Adaptive Density Control}
     \begin{itemize}
+        \justifying
         \item Steps in every 100 iterations to counter over-reconstruction (covering too much geometry) and under-reconstruction (too few Gaussians).
         \item \textbf{Splitting:} Over-reconstructing Gaussians are split into two smaller ones.
         \item \textbf{Cloning:} Under-reconstructing Gaussians are cloned.
@@ -455,6 +488,7 @@
 
     \textbf{Pruning \& Opacity Reset}
     \begin{itemize}
+        \justifying
         \item 3D Gaussians with extremely low opacity or unbound scale are routinely deleted.
         \item Every 3,000 iterations, the base opacity is reset to almost 0 for all Gaussians. This forces unimportant Gaussians to fade out completely and be pruned.
     \end{itemize}
@@ -464,6 +498,7 @@
 
     \textbf{Optimization Step}
     \begin{itemize}
+        \justifying
         \item Rather than standard gradient descent, 3DGS utilizes the Adam optimizer.
         \item Adam takes each parameter's history into account, smoothing out updates so that 3D Gaussians gently morph into their correct geometric shapes.
     \end{itemize}
