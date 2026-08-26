@@ -44,7 +44,7 @@
             \alt<1>{\textbf{\textcolor{blue}{Implicit Representation}}}{\textcolor{gray}{Implicit Representation}}\par\vspace{1em}
             \alt<2-3>{\textbf{\textcolor{blue}{Volumetric Ray Marching}}}{\textcolor{gray}{Volumetric Ray Marching}}\par\vspace{1em}
             \alt<4>{\textbf{\textcolor{blue}{Training Bottlenecks}}}{\textcolor{gray}{Training Bottlenecks}}\par\vspace{1em}
-            \alt<5>{\textbf{\textcolor{blue}{``Black Box'' Inflexibility}}}{\textcolor{gray}{"Black Box" Inflexibility}}\par\vspace{1em}
+            \alt<5>{\textbf{\textcolor{blue}{``Black Box'' Inflexibility}}}{\textcolor{gray}{``Black Box'' Inflexibility}}\par\vspace{1em}
             \alt<6>{\textbf{\textcolor{blue}{Quality vs. Speed}}}{\textcolor{gray}{Quality vs. Speed}}
         \end{column}
 
@@ -100,7 +100,8 @@
             \vspace{1em}
             
             \only<1>{
-                Introduced by Kerbl et al. at INRIA in France in late 2023, 3D Gaussian Splatting (3DGS) combines existing concepts to create a learnable explicit radiance field representation.
+                Introduced by Kerbl et al. at INRIA in France in late 2023, 3D Gaussian Splatting (3DGS) combines existing concepts to create a learnable explicit radiance field representation.\\
+                The publication had a very high impact in the field with over 10,000 citations in three years.
             }
             \only<2>{
                 A 3D Gaussian is an ellipsoid ``fuzzy blob'' that loses opacity towards its edges and can take shapes ranging from perfect spheres to elongated needles or flat shapes.\\Using them as base primitives bypasses previous issues with explicit fields and allows for arbitrary positional precision.
@@ -109,7 +110,7 @@
                 By cleverly decomposing the covariance matrix, 3D Gaussians become differentiable and eligible for standard gradient descent backpropagation.\\Most importantly, this means 3DGS operates completely without neural networks.
             }
             \only<4>{
-                Unlike the neural network ``black box'' of NeRFs, 3D Gaussians provide direct editability of the scene. This makes scene modifications, such as additions or lighting changes, highly accessible for downstream applications.
+                Unlike the neural network ``black box'' of NeRFs, 3D Gaussians provide direct editability of the scene. \\This makes scene modifications, such as additions or lighting changes, highly accessible for downstream applications.
             }
             \only<5>{
                 Kerbl et al. mapped their architecture exhaustively onto modern GPU hardware.\\The centerpiece is the tile-based rasterizer, which allows real-time novel-view synthesis at 1080p resolution while matching or improving upon state-of-the-art NeRF quality.
