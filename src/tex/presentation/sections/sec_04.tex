@@ -20,10 +20,10 @@
             \vspace{1em}
             
             \only<1>{
-                Once the scene is fully trained, the algorithm performs Phase 2 of the forward pass one final time. This permanently calculates and stores the 3D covariance matrix for all 3D Gaussians.
+                Once the scene is fully trained, the algorithm performs phase 2 of the forward pass one final time. This permanently calculates and stores the 3D covariance matrix for all 3D Gaussians.
             }
             \only<2>{
-                From then on, generating new images is strictly feed-forward. The algorithm repeatedly executes only Forward Pass Phases 3 to 6 (projection, sorting, and rasterization) using the camera matrix of any desired novel view.
+                From then on, generating new images is strictly feed-forward. The algorithm repeatedly executes only forward pass phases 3 to 6 (tile mapping, sorting, and rasterization) using the camera matrix of any desired novel view.
             }
             \only<3>{
                 Because the scene geometry is finalized, the backward pass, Adaptive Density Control, and the Adam optimizer are completely disabled.

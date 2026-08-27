@@ -4,9 +4,10 @@
    \centering
     
     % Wraps the TikZ diagram to ensure it fits the slide width perfectly
-    \hspace*{-5mm}
+    \hspace*{-3mm}
     \begin{tikzpicture}[
         box/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=2.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
+        final/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=1.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
         decision/.style={diamond, draw=blue!60!black, fill=blue!10, thick, align=center, aspect=1.4, font=\scriptsize\bfseries, inner sep=1pt},
         arrow/.style={-Latex, thick, blue!70!black, rounded corners=4pt}
     ]
@@ -14,7 +15,7 @@
         \node[box] (init) at (-0.5, 0) {Initialization \\ (Point Cloud)};
         \node[box] (select) at (3, 0) {1. Select Image \\ \& Camera Pose};
         \node[decision] (loss) at (8, 0) {3. Loss Function \\ Converged?};
-        \node[box, fill=green!10, draw=green!50!black] (end) at (11.5, 0) {Final \\ 3D Scene};
+        \node[final, fill=green!10, draw=green!50!black] (end) at (11.5, 0) {Final \\ 3D Scene};
         
         % Top and Bottom nodes forming the loop
         \node[box] (forward) at (5.5, 2.5) {2. Forward Pass \\ (Render Image)};
@@ -31,7 +32,6 @@
         \draw[arrow] (backward.west) -| (select.south);
         
     \end{tikzpicture}%
-    
 \end{frame}
 
 \subsection{Point Cloud Initialization}
@@ -50,11 +50,11 @@
 
         % Right Column: Synchronized Explanations (0.6 split)
         \begin{column}{0.6\textwidth}
-            \justifying 
             \textbf{Details}
             \vspace{1em}
             
-            \begin{overlayarea}{\textwidth}{3cm}                
+            \begin{overlayarea}{\textwidth}{3cm}
+                \justifying 
                 \only<1>{
                     The 3DGS algorithm requires initial geometry, which is commonly derived from a set of input images.\\Because camera poses are usually unknown, Structure from Motion (SfM) software like COLMAP is used to solve a geometric optimization problem, providing an accurate 3D point cloud.
                 }
@@ -78,18 +78,61 @@
 
 \subsection{Forward Pass}
 
+\begin{frame}{Forward Pass: Pipeline Architecture}
+    \centering
+    \vspace{1.5em}
+    \hspace*{-7mm}
+    \resizebox{1.1\linewidth}{!}{%
+    \begin{tikzpicture}[
+        phase/.style={rectangle, draw=blue!80!black, fill=blue!5, thick, rounded corners=4pt, minimum width=2.4cm, minimum height=1.2cm, align=center, font=\scriptsize\bfseries},
+        arrow/.style={-Latex, thick, blue!60!black}
+    ]
+        % --- Phase Nodes ---
+        \node[phase] (p1) at (0,0) {Phase 1\\Attributes};
+        \node[phase] (p2) at (2.8,0) {Phase 2\\3D Matrix};
+        \node[phase] (p3) at (5.6,0) {Phase 3\\Projection};
+        \node[phase] (p4) at (8.4,0) {Phase 4\\Tile Mapping};
+        \node[phase] (p5) at (11.2,0) {Phase 5\\Radix Sort};
+        \node[phase] (p6) at (14.0,0) {Phase 6\\Rasterization};
+        
+        % --- Arrows ---
+        \draw[arrow] (p1) -- (p2);
+        \draw[arrow] (p2) -- (p3);
+        \draw[arrow] (p3) -- (p4);
+        \draw[arrow] (p4) -- (p5);
+        \draw[arrow] (p5) -- (p6);
+        
+        % --- Top Brackets: Spatial Transformations ---
+        \draw[gray!80!black, thick] (-1.2, 0.7) -- (-1.2, 0.9) -- (4.0, 0.9) -- (4.0, 0.7);
+        \node[above, font=\small\bfseries] at (1.4, 0.95) {3D World Space};
+        
+        \draw[gray!80!black, thick] (4.4, 0.7) -- (4.4, 0.9) -- (6.8, 0.9) -- (6.8, 0.7);
+        \node[above, font=\small\bfseries] at (5.6, 0.95) {World $\rightarrow$ View $\rightarrow$ Image};
+        
+        \draw[gray!80!black, thick] (7.2, 0.7) -- (7.2, 0.9) -- (15.2, 0.9) -- (15.2, 0.7);
+        \node[above, font=\small\bfseries] at (11.2, 0.95) {2D Image Space};
+        
+        % --- Bottom Brackets: GPU Architecture Modes ---
+        \draw[gray!80!black, thick] (-1.2, -0.7) -- (-1.2, -0.9) -- (9.6, -0.9) -- (9.6, -0.7);
+        \node[below, font=\small\bfseries] at (4.2, -0.95) {One GPU Thread per 3D/2D Gaussian};
+        
+        \draw[gray!80!black, thick] (10.0, -0.7) -- (10.0, -0.9) -- (12.4, -0.9) -- (12.4, -0.7);
+        \node[below, font=\small\bfseries, align=center] at (11.2, -0.95) {Global Sync\\(Sorting)};
+        
+        \draw[gray!80!black, thick] (12.8, -0.7) -- (12.8, -0.9) -- (15.2, -0.9) -- (15.2, -0.7);
+        \node[below, font=\small\bfseries, align=center] at (14.0, -0.95) {One GPU Thread\\per Pixel};
+        
+    \end{tikzpicture}%
+    }
+\end{frame}
+
 %\begin{frame}{Phase 1: Preparing Attributes}
 \begin{frame}{Forward Pass: Phases 1 \& 2}
-    \begin{itemize}
-        \item The GPU is running one GPU thread per 3D Gaussian.
-    \end{itemize}
 
-    \vspace{1em}
-
-    \pause
     \textbf{Phase 1: Preparing Constituent Attributes}
     \begin{itemize}
         \justifying
+        \item The GPU is running one GPU thread per 3D Gaussian.
         \item Raw values optimized during training are converted from latent space back into physical space.
         \item Opacity is bounded to $(0,1)$ using a sigmoid function, scale uses the exponential function, and the rotational quaternion is normalized.
     \end{itemize}
@@ -201,7 +244,7 @@
 
 \begin{frame}{Forward Pass: Phases 4 \& 5}
     \only<1-2>{
-        \textbf{Phase 4: Preparing Radix Sort}
+        \textbf{Phase 4: Tile Mapping (Preparing Radix Sort)}
         \begin{itemize}
             \justifying
             \item The target output image is divided into a grid of $16\times16$ pixel tiles.
