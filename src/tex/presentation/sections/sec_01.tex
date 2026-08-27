@@ -16,21 +16,23 @@
 
         % Right Column: Synchronized Explanations
         \begin{column}{0.6\textwidth}
-            \justifying
-            \textbf{Definitions}
+            \textbf{Definitions}\\
             \vspace{1em}
-            
-            \only<1>{Creates 3D environments such as individual objects or outdoor spaces from an overlapping set of 2D input images.}
-            \only<2>{Synthesizes new 2D imagery from the 3D scene using new camera positions.\\Real-time capability requires at least 24--30 frames per second (FPS) to appear smooth enough for the human eye.}
-            \only<3>{A function mapping coordinates and viewing angles to color and opacity at the given coordinates.\\Implicit fields are continuous; explicit fields use a finite set of points.}
-            \only<4>{The process of moving all elements inside the view frustum onto the view plane preserving order, adding to aggregated color and opacity of each pixel.}
-            \only<5>{
-                \centering
-                ``Pyramid of Vision''
-                \includegraphics[width=\textwidth]{../figures/view_frustum.pdf}
-            }
+            \begin{overlayarea}{\textwidth}{4cm}
+                \justifying
+                \only<1>{Creates 3D environments such as individual objects or outdoor spaces from an overlapping set of 2D input images.}
+                \only<2>{Synthesizes new 2D imagery from the 3D scene using new camera positions.\\Real-time capability requires at least 24--30 frames per second (FPS) to appear smooth enough for the human eye.}
+                \only<3>{A function mapping coordinates and viewing angles to color and opacity at the given coordinates.\\Implicit fields are continuous; explicit fields use a finite set of points.}
+                \only<4>{The process of moving all elements inside the view frustum onto the view plane preserving order, adding to aggregated color and opacity of each pixel.}
+                \only<5>{
+                    \centering
+                    ``Pyramid of Vision''
+                    \includegraphics[width=\textwidth]{../figures/view_frustum.pdf}
+                }
+            \end{overlayarea}
         \end{column}
     \end{columns}
+    %\pdfcomment[opacity=0]{Welcome everyone and introduce the main agenda.}
 \end{frame}
 
 
@@ -50,30 +52,32 @@
 
         % Right Column: Synchronized Explanations
         \begin{column}{0.6\textwidth}
-            \justifying 
             \textbf{Details}
             \vspace{1em}
             
-            \only<1>{
-                NeRFs learn an implicit radiance field representation, meaning the full 3D scene is encoded entirely within the neural network's weights.
-            }
-            \only<2>{
-                To synthesize novel views, NeRFs transmit a ray for every pixel, resulting in a very high number of queries to the neural network for discretized points along the ray's path.\vspace{1em}\\
-                \includegraphics[width=0.8\textwidth]{../figures/view_frustum.pdf}
-            }
-            \only<3>{
-                Ray marching and splatting are opposite ways to determine a pixel color value.
-            }
-            \only<4>{
-                Training NeRFs to reach photorealistic scene quality can take several days on professional high-end GPU hardware.\\
-                Ray marching during synthesis is highly time-con\-su\-ming.
-            }
-            \only<5>{
-                Because all scene details are hidden inside the neural network's weights, it is not easily possible to edit or amend a reconstructed scene.
-            }
-            \only<6>{
-                NeRFs force a trade-off: state-of-the-art reconstruction quality requires long training and synthesis times.\\Abandoning the neural network for explicit representations increases speed but inherently reduces image quality.
-            }
+            \begin{overlayarea}{\textwidth}{5.3cm}
+                \justifying 
+                \only<1>{
+                    NeRFs learn an implicit radiance field representation, meaning the full 3D scene is encoded entirely within the neural network's weights.
+                }
+                \only<2>{
+                    To synthesize novel views, NeRFs transmit a ray for every pixel, resulting in a very high number of queries to the neural network for discretized points along the ray's path.\vspace{1em}\\
+                    \includegraphics[width=0.8\textwidth]{../figures/view_frustum.pdf}
+                }
+                \only<3>{
+                    Ray marching and splatting are opposite ways to determine a pixel color value.
+                }
+                \only<4>{
+                    Training NeRFs to reach photorealistic scene quality can take several days on professional high-end GPU hardware.\\
+                    Ray marching during synthesis is highly time-con\-su\-ming.
+                }
+                \only<5>{
+                    Because all scene details are hidden inside the neural network's weights, it is not easily possible to edit or amend a reconstructed scene.
+                }
+                \only<6>{
+                    NeRFs force a trade-off: state-of-the-art reconstruction quality requires long training and synthesis times.\\Abandoning the neural network for explicit representations increases speed but inherently reduces image quality.
+                }
+            \end{overlayarea}
         \end{column}
     \end{columns}
 \end{frame}
