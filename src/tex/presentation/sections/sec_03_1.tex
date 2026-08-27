@@ -54,21 +54,23 @@
             \textbf{Details}
             \vspace{1em}
             
-            \only<1>{
-                The 3DGS algorithm requires initial geometry, which is commonly derived from a set of input images.\\Because camera poses are usually unknown, Structure from Motion (SfM) software like COLMAP is used to solve a geometric optimization problem, providing an accurate 3D point cloud.
-            }
-            \only<2>{
-                As another result from SfM, each input image is assigned a $3\times3$ camera matrix~$W_{rot}$ which contains the camera's orientation in world space.
-            }
-            \only<3>{
-                The SfM points act as the origins for the initial 3D Gaussians. 
-                \begin{itemize}
-                    \justifying
-                    \item They are initialized as perfect spheres.
-                    \item Radii are deduced from their three nearest neighbors.
-                    \item Opacity is set to $0.1$ and color to any RGB value.
-                \end{itemize}
-            }
+            \begin{overlayarea}{\textwidth}{3cm}                
+                \only<1>{
+                    The 3DGS algorithm requires initial geometry, which is commonly derived from a set of input images.\\Because camera poses are usually unknown, Structure from Motion (SfM) software like COLMAP is used to solve a geometric optimization problem, providing an accurate 3D point cloud.
+                }
+                \only<2>{
+                    As another result from SfM, each input image is assigned a $3\times3$ camera matrix~$W_{rot}$ which contains the camera's orientation in world space.
+                }
+                \only<3>{
+                    The SfM points act as the origins for the initial 3D Gaussians. 
+                    \begin{itemize}
+                        \justifying
+                        \item They are initialized as perfect spheres.
+                        \item Radii are deduced from their three nearest neighbors.
+                        \item Opacity is set to $0.1$ and color to any RGB value.
+                    \end{itemize}
+                }
+            \end{overlayarea}
         \end{column}
     \end{columns}
 \end{frame}
