@@ -4,7 +4,7 @@
    \centering
     
     % Wraps the TikZ diagram to ensure it fits the slide width perfectly
-    \hspace*{-3mm}
+    \hspace*{-5mm}
     \begin{tikzpicture}[
         box/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=2.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
         final/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=1.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
@@ -22,10 +22,11 @@
         \node[box] (backward) at (5.5, -2.5) {4. Backward Pass \\ (Update Attributes)};
         
         % Horizontal entry and exit arrows
+        \draw[arrow] (-2.3, 0) -- (init.west);
         \draw[arrow] (init.east) -- (select.west);
         \draw[arrow] (loss.east) -- node[above, font=\tiny, text=blue!80!black] {Yes} (end.west);
         
-        % Arrows forming the rectangular loop (|- and -| create the 90-degree corners)
+        % Arrows forming the rectangular loop (|- and -| create the 90-degree corners)        
         \draw[arrow] (select.north) |- (forward.west);
         \draw[arrow] (forward.east) -| (loss.north);
         \draw[arrow] (loss.south) |- node[pos=0.25, right, font=\tiny, text=blue!80!black] {No} (backward.east);
@@ -454,4 +455,7 @@
     }
 \end{frame}
 
-
+\begingroup
+    \addtocounter{framenumber}{-1}
+    \againframe{training_cycle}
+\endgroup

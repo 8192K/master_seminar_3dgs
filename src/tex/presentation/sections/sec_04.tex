@@ -1,38 +1,53 @@
 \section{Novel-View Synthesis}
 
 \begin{frame}{Novel-View Synthesis}
-    \begin{columns}[T]
-        % Left Column: Spotlighted Concepts (0.35 split)
-        \begin{column}{0.35\textwidth}
-            \textbf{Synthesis Steps}
-            \vspace{1em}
+    \centering
+    \begin{overlayarea}{\textwidth}{4.3cm}
+        \resizebox{\linewidth}{!}{%
+        \begin{tikzpicture}[
+            box/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=2.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
+            phase/.style={rectangle, draw=blue!80!black, fill=blue!5, thick, rounded corners=2pt, minimum width=2.2cm, minimum height=0.9cm, align=center, font=\scriptsize\bfseries},
+            arrow/.style={-Latex, thick, blue!70!black, rounded corners=4pt}
+        ]
+            % --- Nodes ---
+            \node[box, fill=green!10, draw=green!50!black] (scene) at (0.7, 1.5) {Final \\ 3D Scene};
+            \node[phase] (p2) at (3.8, 1.5) {FP Phase 2\\3D Matrix};
             
-            \alt<1>{\textbf{\textcolor{blue}{Pre-computation}}}{\textcolor{gray}{Pre-computation}}\par\vspace{1em}
-            \alt<2>{\textbf{\textcolor{blue}{Feed-Forward Execution}}}{\textcolor{gray}{Feed-Forward Execution}}\par\vspace{1em}
-            \alt<3>{\textbf{\textcolor{blue}{Disabled Components}}}{\textcolor{gray}{Disabled Components}}\par\vspace{1em}
-            \alt<4>{\textbf{\textcolor{blue}{Real-Time Performance}}}{\textcolor{gray}{Real-Time Performance}}
-        \end{column}
+            \node[box] (cam) at (7.0, 1.5) {Camera Matrix \\ (Novel View)};
+            \node[phase] (p3) at (10.4, 1.5) {FP Phase 3\\Projection};
+            \node[phase] (p4) at (13.4, 1.5) {FP Phase 4\\Tile Mapping};
+            
+            \node[phase] (p5) at (13.4, -0.8) {FP Phase 5\\Radix Sort};
+            \node[phase] (p6) at (10.4, -0.8) {FP Phase 6\\Rasterization};
+            \node[box, fill=orange!10, draw=orange!80!black] (img) at (7.0, -0.8) {Rendered \\ Frame};
+            
+            % --- Arrows ---
+            \draw[arrow] (scene.east) -- (p2.west);
+            \draw[arrow] (p2.east) -- (cam.west);
+            
+            \draw[arrow] (cam.east) -- (p3.west);
+            \draw[arrow] (p3.east) -- (p4.west);
+            \draw[arrow] (p4.south) -- (p5.north);
+            \draw[arrow] (p5.west) -- (p6.east);
+            \draw[arrow] (p6.west) -- (img.east);
+            
+            \draw[arrow] (img.north) -- node[left, font=\scriptsize, text=blue!80!black] {Next Frame} (cam.south);
+            
+            % --- Grouping Brackets/Labels ---
+            \draw[gray!80!black, thick, dashed] (5.2, 2.5) rectangle (14.8, -1.8);
+            \node[font=\small\bfseries, text=gray!80!black, fill=white, inner sep=2pt] at (10, 2.5) {Real-Time Feed-Forward Loop};
+            
+        \end{tikzpicture}%
+        }
+    \end{overlayarea}
+    \pause
 
-        % Right Column: Synchronized Explanations (0.6 split)
-        \begin{column}{0.6\textwidth}
-            \justifying 
-            \textbf{Details}
-            \vspace{1em}
-            
-            \only<1>{
-                Once the scene is fully trained, the algorithm performs phase 2 of the forward pass one final time. This permanently calculates and stores the 3D covariance matrix for all 3D Gaussians.
-            }
-            \only<2>{
-                From then on, generating new images is strictly feed-forward. The algorithm repeatedly executes only forward pass phases 3 to 6 (tile mapping, sorting, and rasterization) using the camera matrix of any desired novel view.
-            }
-            \only<3>{
-                Because the scene geometry is finalized, the backward pass, Adaptive Density Control, and the Adam optimizer are completely disabled.
-            }
-            \only<4>{
-                Freed from the training overhead and powered by the raw speed of the tile-based rasterizer, 3DGS quickly reaches real-time rendering levels.
-            }
-        \end{column}
-    \end{columns}
+    \begin{itemize}
+        \justifying
+        \item Because the scene geometry is finalized, the backward pass, Adaptive Density Control, and the Adam optimizer are completely disabled.
+        \item Freed from the training overhead and powered by the raw speed of the tile-based rasterizer, 3DGS quickly reaches real-time rendering levels.
+    \end{itemize}
+
 \end{frame}
 
 
