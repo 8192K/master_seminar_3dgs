@@ -15,23 +15,26 @@
         \node<2->[above left, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
             at (-0.1, 0.1) {Position $\mu$};
 
-        % 3. Opacity (o)
-        \node<3->[below right, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
-            at (-0.3, -0.3) {Peak Opacity $o$};
-
-        % 5. Covariance Matrix (\Sigma)
+        % 3. Covariance Matrix (\Sigma)
         \begin{scope}[rotate=15]
-            \draw<4->[-Latex, very thick, blue!80!black] 
+            \draw<3->[-Latex, very thick, blue!80!black] 
                 (0,0) -- (4.5, 0) node[midway, below, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt, yshift=-0.3cm, font=\bfseries] {Covariance Matrix $\Sigma$};
-            \draw<4->[-Latex, very thick, blue!80!black] (0,0) -- (0, 2.2);
+            \draw<3->[-Latex, very thick, blue!80!black] (0,0) -- (0, 2.2);
         \end{scope}
 
-        % 4. 3-Sigma Bounding Box
+        % 4. Opacity (o)
+        \node<4->[below right, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
+            at (-0.3, -0.3) {Peak Opacity $o$};
+
+        % 5. 3-Sigma Bounding Box
         \begin{scope}[rotate=15]
             \draw<6->[dashed, very thick, red!80!black] (0,0) ellipse (4.5 and 2.2);
             \node<6->[red!80!black, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
                 at (4.2, 1.8) {$3\sigma$ Bound};
         \end{scope}
+
+        \node<7->[below right, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
+            at (3, -1.7) {What about color?};
     \end{tikzpicture}
 
     %\vspace{1em}
@@ -65,7 +68,9 @@
             \vspace{1em}
             
             \only<1>{
-                To work with gradient descent, the covariance matrix $\Sigma$ must be differentiable and remain positive semi-definite (eigenvalues $\ge 0$).\\Running a loop during backpropagation to find valid values is computationally too costly.
+                To work with gradient descent, the covariance matrix $\Sigma$ must be differentiable and remain positive semi-definite (eigenvalues $\ge 0$) to be geometrically valid.\\
+                \vspace{1em}
+                Running a loop during backpropagation to find valid values is computationally too costly.
             }
             \only<2>{
                 Kerbl et al. bypassed this by decomposing $\Sigma$ into a scaling matrix $S$ and rotational matrix~$R$ mirroring standard eigendecomposition ($\Sigma=Q\Delta Q^{T}$):
@@ -86,7 +91,9 @@
                 }
             }
             \only<5>{
-                3DGS only stores and optimizes these 7 specific values for each 3D Gaussian.\\Because an eigendecomposition is always positive semi-definite, constructing a new covariance matrix from these components is guaranteed to be geometrically valid.
+                3DGS only stores and optimizes these 7 specific values for each 3D Gaussian.\\
+                \vspace{1em}
+                Because an eigendecomposition is always positive semi-definite, constructing a new covariance matrix from these components is guaranteed to be geometrically valid.
             }
         \end{column}
     \end{columns}

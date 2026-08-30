@@ -50,8 +50,21 @@
 
 \end{frame}
 
+\section{Summary and Discussion}
 
-\section{Video and Discussion}
+\begin{frame}{Summary and Discussion}
+    \begin{itemize}
+        \justifying
+        \item 3D Gaussian Splatting is a learnable and explicit radiance field representation for 3D Reconstruction, abandoning neural networks.\vspace{1em}
+        \item By combining multiple existing approaches and technologies, adding new ideas, and mapping them onto modern GPU hardware, Kerbl. et al made it possible to have real-time rendering of reconstructed 3D scenes for the first time.
+    \end{itemize}
+    \vspace{2em}
+    I am looking forward to answering your questions.
+\end{frame}
+
+\appendix
+
+\section{Videos}
 
 \begin{frame}{3DGS Videos}
     \begin{columns}[T]
@@ -83,16 +96,7 @@
     \end{columns}
 \end{frame}
 
-\begingroup
-    \addtocounter{framenumber}{-1}
-    \begin{frame}{Discussion}
-        Looking forward to answering your questions.
-    \end{frame}
-\endgroup
-
-\appendix
-
-\section{Appendix}
+\section{Backpropagation Calculations}
 
 \begin{frame}{Appendix: Backward Pass Phase 3 (Part 1)}
     \textbf{Phase 3: 2D Splat to 2D Geometry (Opacity \& Position)}
@@ -152,4 +156,15 @@
         \item \textbf{Base Opacity (Sigmoid):} Backpropagating through the sigmoid function:
         $$ \frac{\partial L}{\partial o_{raw}} = \frac{\partial L}{\partial o} \cdot o(1-o) $$
     \end{itemize}
+\end{frame}
+
+\section{Selected References}
+
+\begin{frame}[allowframebreaks]{Selected References}
+    \footnotesize
+    \nocite{*}
+    \setbeamertemplate{bibliography item}[text]
+    
+    \bibliographystyle{plain}
+    \bibliography{references}
 \end{frame}
