@@ -9,13 +9,13 @@
         
         \vspace{1.5em}
         
-        \item \textbf{3D Gaussians as a Novel Approach} \\
-        Using 3D Gaussians as the differentiable, explicit base primitive, and abandoning neural networks was the key to unlocking previously unseen rendering speeds.
+        \item \textbf{3D Gaussians As The Next Logical Step} \\
+        Using 3D Gaussians as the explicit base primitive, cleverly decomposing them to make fast backpropagation possible, and abandoning neural networks is the key to unlocking previously unseen rendering speeds.
         
         \vspace{1.5em}
         
-        \item \textbf{Impact on the field of 3D Reconstruction} \\
-        Real-time rendering of reconstructed scenes represents a disruption in 3D Reconstruction enabling many new downstream applications.
+        \item \textbf{Engineering Effort} \\
+        State-of-the-art GPU integration yields massive speed-ups, mostly due to the explicit nature of the base primitive.
     \end{itemize}
     \pdfcomment[opacity=0]{
         - 3D Gaussian Splatting is another technology in the field of 3D reconstruction\textCR
@@ -23,7 +23,7 @@
         - implicit vs explicit \textCR
         \textCR
         \textCR
-        - Let's first look at the agenda. After a short background section, we'll start by examining the 3D Gaussian data structure before we dissect the training procedure in more detail. I'll finish by showing how the rendering process works, also called novel-view synthesis.\textCR
+        - Let's first look at the agenda. After a short background section, we'll start by examining the 3D Gaussian data structure before we dissect the training procedure in more detail, focussing on the forward pass. We'll finish by showing how the rendering process works, also called novel-view synthesis.\textCR
     }
 \end{frame}
 

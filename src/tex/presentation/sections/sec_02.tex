@@ -108,15 +108,17 @@
                 %     }
                 % }
                 \only<4>{
-                    3DGS only stores and optimizes these 7 specific values for each 3D Gaussian.\\
+                    3DGS only stores and optimizes these 7 specific values for each 3D Gaussian covariance matrix.\\
                     \vspace{1em}
                     Because an eigendecomposition is always positive semi-definite, constructing a new covariance matrix from these components is guaranteed to be geometrically valid.
                 }
             \end{overlayarea}
         \end{column}
     \end{columns}
+     \only<1>{\pdfcomment[opacity=0]{
+        - we have to decompose the covariance matrix as we are passing the whole 3D Gaussian into backpropagation. Keeping the covariance matrix unchanged would require costly operations during gradient descent to keep the cov matrix valid. Decomposing into two components and treating each component separately during backpropagation solves this issue elegantly.
+    }}
     \only<4>{\pdfcomment[opacity=0]{
-        - So we are passing a decomposed covariance matrix into backpropagation where it and other attributes are being adjusted and the Gaussian remains valid at all times.
         - with an understanding of the base primitive, we can now dissect the training procedure. (directly proceed to training cycle)
     }}
 \end{frame}
