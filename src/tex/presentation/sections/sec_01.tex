@@ -17,6 +17,13 @@
         \item \textbf{Impact on 3D Reconstruction} \\
         Real-time rendering of reconstructed scenes represents a fundamental disruption in 3D Reconstruction fascilitating many new downstream applications.
     \end{itemize}
+    \pdfcomment[opacity=0]{
+        - 3D Gaussian Splatting is another technology in the field of 3D reconstruction\textCR
+        - It takes its motivation directly from the shortcomings of neural radiance fields which Carmen presented just before\textCR
+        \textCR
+        \textCR
+        - Let's first look at the agenda. After a short background section, we'll start by examining the 3D Gaussian data structure before we dissect the training procedure in more detail. I'll finish by showing how the rendering process works, also called novel-view synthesis.\textCR
+    }
 \end{frame}
 
 \section{Background}
@@ -95,7 +102,13 @@
             \end{overlayarea}
         \end{column}
     \end{columns}
-    %\pdfcomment[opacity=0]{Welcome everyone and introduce the main agenda.}
+    \pdfcomment[opacity=0]{
+        - 3D Reconstruction is a field in Computer Graphics. It's basic components are scene creation .... and novel-view synthesis.\textCR
+    }
+    \only<3>{\pdfcomment[opacity=0]{
+        - Splatting is in essence the reverse procedure to volumetric ray marching used in NeRFs.\textCR
+        - Now let's continue with an overview of 3D Gaussian Splatting.\textCR
+    }}
 \end{frame}
 
 
@@ -156,8 +169,8 @@
             \alt<1>{\textbf{\textcolor{blue}{Origin \& Architecture}}}{\textcolor{gray}{Origin \& Architecture}}\par\vspace{1em}
             \alt<2>{\textbf{\textcolor{blue}{The Base Primitive}}}{\textcolor{gray}{The Base Primitive}}\par\vspace{1em}
             \alt<3>{\textbf{\textcolor{blue}{Fully Differentiable}}}{\textcolor{gray}{Fully Differentiable}}\par\vspace{1em}            
-            \alt<4>{\textbf{\textcolor{blue}{Direct Editability}}}{\textcolor{gray}{Direct Editability}}\par\vspace{1em}
-            \alt<5>{\textbf{\textcolor{blue}{Hardware Optimization}}}{\textcolor{gray}{Hardware Optimization}}
+            % \alt<4>{\textbf{\textcolor{blue}{Direct Editability}}}{\textcolor{gray}{Direct Editability}}\par\vspace{1em}
+            \alt<4>{\textbf{\textcolor{blue}{Hardware Optimization}}}{\textcolor{gray}{Hardware Optimization}}
         \end{column}
 
         % Right Column: Synchronized Explanations
@@ -177,20 +190,28 @@
                 Using them as base primitives bypasses previous issues with explicit fields and allows for arbitrary positional precision.
             }
             \only<3>{
-                By cleverly decomposing the covariance matrix, 3D Gaussians become differentiable and eligible for standard gradient descent backpropagation.\\
+                Using clever decompositions of 3D Gaussians, they become differentiable and eligible for standard gradient descent backpropagation.\\
                 \vspace{1em}
-                Most importantly, this means 3DGS operates completely without neural networks.
+                Most importantly, this means 3DGS operates completely without neural networks which removes the ``blackbox'' associated with them.
             }
+            % \only<4>{
+            %     Unlike the neural network ``black box'' of NeRFs, 3D Gaussians provide direct editability of the scene.\\
+            %     \vspace{1em}
+            %     This makes scene modifications, such as additions or lighting changes, highly accessible for downstream applications.
+            % }
             \only<4>{
-                Unlike the neural network ``black box'' of NeRFs, 3D Gaussians provide direct editability of the scene.\\
-                \vspace{1em}
-                This makes scene modifications, such as additions or lighting changes, highly accessible for downstream applications.
-            }
-            \only<5>{
                 Kerbl et al. mapped their architecture exhaustively onto modern GPU hardware.\\
                 \vspace{1em}
                 The centerpiece is the tile-based rasterizer, which allows real-time novel-view synthesis at 1080p resolution while matching or improving upon state-of-the-art NeRF quality.
             }
+            \only<3>{\pdfcomment[opacity=0]{
+                - Editability, extensibility
+            }}
+            \only<4>{\pdfcomment[opacity=0]{
+                - For the engineering side of the publication...\textCR
+                \textCR
+                - Now that we know what 3DGS is in broad terms, let's have a look at what a 3D Gaussian or a Gaussian in general is.
+            }}
         \end{column}
     \end{columns}
 \end{frame}

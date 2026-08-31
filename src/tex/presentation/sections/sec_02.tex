@@ -20,6 +20,7 @@
             \draw<3->[-Latex, very thick, blue!80!black] 
                 (0,0) -- (4.5, 0) node[midway, below, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt, yshift=-0.3cm, font=\bfseries] {Covariance Matrix $\Sigma$};
             \draw<3->[-Latex, very thick, blue!80!black] (0,0) -- (0, 2.2);
+            \draw<3->[-Latex, very thick, blue!80!black] (0,0) -- (0.7, 0.55);
         \end{scope}
 
         % 4. Opacity (o)
@@ -36,14 +37,26 @@
         \node<7->[below right, font=\large\bfseries, fill=white, fill opacity=0.8, text opacity=1, rounded corners, inner sep=2pt] 
             at (3, -1.7) {What about color?};
     \end{tikzpicture}
-
-    %\vspace{1em}
     
-    % 6. The Opacity Distribution Formula (using \only to fix rendering)
+    % 6. The Opacity Distribution Formula
     \only<5->{
         \vspace{-2.1cm}
         $$ \darkmathhighlight{\text{Multivariate Normal Distribution:}\hspace{0.2cm}\alpha(p)=o\cdot exp\left(-\frac{1}{2}(p-\mu)^{T}\Sigma^{-1}(p-\mu)\right)} $$
     }
+
+    \only<1-3>{\pdfcomment[opacity=0]{
+        - I mentioned that a 3D Gaussian is a fuzzy blob, so here is one.\textCR
+        - To describe it more formally, it has a position \textCR
+        - the covariance matrix is 3 by 3 in 3 dimensions and determines the Gaussian's shape \textCR
+    }}
+    \only<4-6>{\pdfcomment[opacity=0]{
+        - a 3D Gaussian also has a peak opacity at its center which is distributed according to a multi-dimensional normal distribution. Hence the name 'Gaussian'. \textCR
+        - But as this mathematical distribution would reach into infinity, we apply a hard 3-sigma boundary. So a 3D Gaussian is a data structure that is defined within the limits of the boundary and that is much more opaque at its center than at its edges. \textCR
+    }}
+    \only<7>{\pdfcomment[opacity=0]{
+        - The one attribute still left out is color. Color in 3D Gaussian uses spherical harmonics. That is a concept that allows a different base color for every Gaussian center point dependent on viewing angle. Its details are out of scope of this presentation.\textCR
+        - Next, I will explain why it is important to decompose the convariance matrix
+    }}
 \end{frame}
 
 
@@ -97,4 +110,7 @@
             }
         \end{column}
     \end{columns}
+    \only<5>{\pdfcomment[opacity=0]{
+        - with an understanding of the base primitive, we can now dissect the training procedure. (directly proceed to training cycle)
+    }}
 \end{frame}

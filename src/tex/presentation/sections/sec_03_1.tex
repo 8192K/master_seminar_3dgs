@@ -33,6 +33,9 @@
         \draw[arrow] (backward.west) -| (select.south);
         
     \end{tikzpicture}%
+    \pdfcomment[opacity=0]{
+        - Let's examine point cloud initialization in detail
+    }
 \end{frame}
 
 \subsection{Point Cloud Initialization}
@@ -76,12 +79,18 @@
             \end{overlayarea}
         \end{column}
     \end{columns}
+    \pdfcomment[opacity=0]{
+        - Usually, in 3D Reconstruction, we are faced with an initial problem of not knowing where in world space the input images were taken. \textCR
+        - Introduce world space, view space, image space \textCR 
+        \textCR
+        - After the initialization phase we progress to the forward pass.
+    }
 \end{frame}
 
 
 \subsection{Forward Pass}
 
-\begin{frame}{Forward Pass: Pipeline Architecture}
+\begin{frame}[label=forwardpass_pipeline]{Forward Pass: Pipeline Architecture}
     \centering
     \vspace{1.5em}
     \hspace*{-7mm}
@@ -126,6 +135,11 @@
         \node[below, font=\small\bfseries, align=center] at (14.0, -0.95) {One GPU Thread\\per Pixel};
         
     \end{tikzpicture}%
+    }
+    \pdfcomment[opacity=0]{
+        - We can subdivide the forward pass into 6 phases. \textCR
+        - What's also important from now on is looking at which space a phase operates in, which you can see above the phases as well as which mode the GPU is running in, which you can see below the phases. \textCR
+        - We will look at each phase in detail on the following slides, but the general path is: we project 3D Gaussian to 2D Gaussian, sort them and finally as the rasterization step, splat them against the camera sensor.
     }
 \end{frame}
 
@@ -245,6 +259,11 @@
     }
 \end{frame}
 
+\begingroup
+    \addtocounter{framenumber}{-1}
+    \againframe{forwardpass_pipeline}
+\endgroup
+
 \begin{frame}{Forward Pass: Phases 4 \& 5}
     \only<1-2>{
         \textbf{Phase 4: Tile Mapping (Preparing Radix Sort)}
@@ -357,104 +376,195 @@
 
 \begin{frame}{Forward Pass: Phase 6}
     % Overlay 1: Text only
-    \only<1>{
-        \textbf{Phase 6: Tile-Based Rasterization (Splatting)}
-        \begin{itemize}
-            \justifying
-            \item Operating natively in 2D image space, the GPU assigns one processing thread per pixel.
-            \item \textbf{Alpha Compositing:} Pixels accumulate color by blending the sorted list of overlapping 2D Gaussians front-to-back:
-            $$
-             \darkmathhighlight{
-                C_{p} = \sum_{i=1}^{N} c_i \alpha_i T_i,
-                \hspace{0.5cm} \text{with} \hspace{0.5cm}
-                T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)
-                \hspace{0.5cm} \text{the transmittance}}
-            $$
-            \item \textbf{Early Stopping:} Threads stop calculating exactly when transmittance ($T_i$) drops near zero, ignoring hidden geometry for massive speed-ups.
-        \end{itemize}
+    % \only<1>{
+    \textbf{Phase 6: Tile-Based Rasterization (Splatting)}
+    \vspace*{2mm}
+    \begin{itemize}
+        \justifying
+        \item Operating in 2D image space, the GPU assigns one processing thread per pixel.
+        \item \textbf{Alpha Compositing:} Pixels accumulate color by blending the sorted list of overlapping 2D Gaussians front-to-back:\\
+        \vspace*{2mm}
+        {\hspace{1.1cm}
+        \resizebox{0.75\linewidth}{!}{
+        $$
+            \darkmathhighlight{
+            C_{p} = \sum_{i=1}^{N} c_i \alpha_i T_i,
+            \hspace{0.5cm} \text{with} \hspace{0.5cm}
+            T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)
+            \hspace{0.5cm} \text{the transmittance}}
+        $$
+        }}
+    \end{itemize}
+        %\item \textbf{Early Stopping:} Threads stop calculating exactly when transmittance ($T_i$) drops near zero, ignoring hidden geometry for massive speed-ups.
+    \pause
+    \vspace*{1mm}
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[scale=0.65, every node/.style={transform shape}]
+            
+            % 1. Mathematically derived blended color from alpha compositing
+            % C_p = (0.4 * Red) + (0.5 * 0.6 * Green) + (0.8 * 0.3 * Blue)
+            \definecolor{blendedColor}{rgb}{0.64, 0.54, 0.0}
+            
+            % 2. The Target Pixel on the View Plane
+            \draw[thick, blue!60!black, fill=blendedColor] (-2.5, -1.2) rectangle (-0.5, 1.2);
+            \node[font=\Large\bfseries, blue!80!black, align=center] at (-1.5, 1.9) {Target \\ Pixel $p$};
+            \node[circle, fill=black, inner sep=1.5pt] (pixel) at (-1.5,0) {};
+            
+            % Labels inside the colored pixel
+            \node[font=\small\bfseries, text=white] at (-1.5, 0.4) {Blended};
+            \node[font=\small\bfseries, text=white] at (-1.5, -0.4) {Color};
+            
+            % 3. The Rendering Thread / Depth Ray
+            \draw[-Latex, very thick, gray] (pixel) -- (16.5, 0) node[right, font=\Large\bfseries] {Depth};
+            
+            % 4. Sorted 2D Gaussians (Alpha Compositing)
+            % Splat 1 (Target alpha 0.4 -> ~0.09 per layer)
+            \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                \fill[red, opacity=0.09] (2.5, 0) ellipse ({0.6*\s} and {1.2*\s});
+            }
+            \draw[red!80!black, thick] (2.5, 0) ellipse (0.6 and 1.2);
+            \node[circle, fill=black!80, inner sep=1.2pt] at (2.5, 0) {}; % Piercing dot
+            \node[above, font=\large\bfseries] at (2.5, 1.4) {Gaussian 1};
+            \node[below, font=\normalsize, align=center] at (2.5, -1.3) {Opacity \\ $\alpha_1=0.4$};
+            \node[below, font=\normalsize\bfseries, text=blue!70!black] at (2.5, -2.3) {$T_1=1.00$};
+            
+            % Splat 2 (Target alpha 0.5 -> ~0.12 per layer)
+            \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                \fill[green, opacity=0.12] (6, 0.3) ellipse ({0.7*\s} and {1.3*\s});
+            }
+            \draw[green!80!black, thick] (6, 0.3) ellipse (0.7 and 1.3);
+            \node[circle, fill=black!80, inner sep=1.2pt] at (6, 0) {}; % Piercing dot
+            \node[above, font=\large\bfseries] at (6, 1.8) {Gaussian 2};
+            \node[below, font=\normalsize, align=center] at (6, -1.3) {Opacity \\ $\alpha_2=0.5$};
+            \node[below, font=\normalsize\bfseries, text=blue!70!black] at (6, -2.3) {$T_2=0.60$};
+            
+            % Splat 3 (Target alpha 0.8 -> ~0.27 per layer)
+            \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                \fill[yellow, opacity=0.27] (9.5, -0.2) ellipse ({0.5*\s} and {1.0*\s});
+            }
+            \draw[yellow!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
+            \node[circle, fill=black!80, inner sep=1.2pt] at (9.5, 0) {}; % Piercing dot
+            \node[above, font=\large\bfseries] at (9.5, 1.2) {Gaussian 3};
+            \node[below, font=\normalsize, align=center] at (9.5, -1.3) {Opacity \\ $\alpha_3=0.8$};
+            \node[below, font=\normalsize\bfseries, text=blue!70!black] at (9.5, -2.3) {$T_3=0.30$};
+            
+            % 5. Early Stopping Barrier
+            \draw[dashed, red, very thick] (11.2, -2.5) -- (11, 2.5);
+            \node[red, font=\Large\bfseries, rotate=90] at (11.7, 0) {Early Stopping};
+            \node[red, font=\normalsize\bfseries, rotate=90] at (12.2, -0.2) {($T_4 \approx 0$)};
+            
+            % 6. Culled / Ignored Geometry
+            % Splat 4 (Ignored)
+            \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                \fill[gray, opacity=0.07] (13.5, 0.4) ellipse ({0.6*\s} and {1.1*\s});
+            }
+            \draw[gray, dashed, thick] (13.5, 0.4) ellipse (0.6 and 1.1);
+            \node[circle, fill=gray!80!black, inner sep=1.2pt] at (13.5, 0) {}; % Piercing dot
+            \node[above, font=\large\bfseries, text=gray] at (13.5, 1.7) {Gaussian 4};
+            
+            % Splat 5 (Ignored)
+            \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+                \fill[gray, opacity=0.04] (15, -0.3) ellipse ({0.7*\s} and {0.9*\s});
+            }
+            \draw[gray, dashed, thick] (15, -0.3) ellipse (0.7 and 0.9);
+            \node[circle, fill=gray!80!black, inner sep=1.2pt] at (15, 0) {}; % Piercing dot
+            \node[above, font=\large\bfseries, text=gray] at (15.2, 0.8) {Gaussian 5};
+            
+            \node[text=gray, font=\Large\bfseries, align=center] at (14.25, -1.9) {Geometry\\Ignored};
+            
+        \end{tikzpicture}%
+    \end{figure}
+    % }
+
+    \pdfcomment[opacity=0]{
+        - mention GPU thread blocks \textCR
+        - mention early stopping (the transmittance enables early stopping etc) \textCR
+        \textCR
+        - This completes the forward pass (continue to training cycle)
     }
     
     % Overlay 2: Graphic only (replaces the text on the same frame number)
-    \only<2>{
-        \begin{figure}
-            \centering
-            % Scales the entire graphic to perfectly fit the slide width
-            \hspace*{-5mm}
-            \begin{tikzpicture}[scale=0.73, every node/.style={transform shape}]
+    % \only<2>{
+    %     \begin{figure}
+    %         \centering
+    %         % Scales the entire graphic to perfectly fit the slide width
+    %         \hspace*{-5mm}
+    %         \begin{tikzpicture}[scale=0.73, every node/.style={transform shape}]
                 
-                % 1. Mathematically derived blended color from alpha compositing
-                % C_p = (0.4 * Red) + (0.5 * 0.6 * Green) + (0.8 * 0.3 * Blue)
-                \definecolor{blendedColor}{rgb}{0.64, 0.54, 0.0}
+    %             % 1. Mathematically derived blended color from alpha compositing
+    %             % C_p = (0.4 * Red) + (0.5 * 0.6 * Green) + (0.8 * 0.3 * Blue)
+    %             \definecolor{blendedColor}{rgb}{0.64, 0.54, 0.0}
                 
-                % 2. The Target Pixel on the View Plane
-                \draw[thick, blue!60!black, fill=blendedColor] (-2.5, -1.2) rectangle (-0.5, 1.2);
-                \node[font=\Large\bfseries, blue!80!black, align=center] at (-1.5, 1.9) {Target \\ Pixel $p$};
-                \node[circle, fill=black, inner sep=1.5pt] (pixel) at (-1.5,0) {};
+    %             % 2. The Target Pixel on the View Plane
+    %             \draw[thick, blue!60!black, fill=blendedColor] (-2.5, -1.2) rectangle (-0.5, 1.2);
+    %             \node[font=\Large\bfseries, blue!80!black, align=center] at (-1.5, 1.9) {Target \\ Pixel $p$};
+    %             \node[circle, fill=black, inner sep=1.5pt] (pixel) at (-1.5,0) {};
                 
-                % Labels inside the colored pixel
-                \node[font=\small\bfseries, text=white] at (-1.5, 0.4) {Blended};
-                \node[font=\small\bfseries, text=white] at (-1.5, -0.4) {Color};
+    %             % Labels inside the colored pixel
+    %             \node[font=\small\bfseries, text=white] at (-1.5, 0.4) {Blended};
+    %             \node[font=\small\bfseries, text=white] at (-1.5, -0.4) {Color};
                 
-                % 3. The Rendering Thread / Depth Ray
-                \draw[-Latex, very thick, gray] (pixel) -- (16.5, 0) node[right, font=\Large\bfseries] {Depth};
+    %             % 3. The Rendering Thread / Depth Ray
+    %             \draw[-Latex, very thick, gray] (pixel) -- (16.5, 0) node[right, font=\Large\bfseries] {Depth};
                 
-                % 4. Sorted 2D Gaussians (Alpha Compositing)
-                % Splat 1 (Target alpha 0.4 -> ~0.09 per layer)
-                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-                    \fill[red, opacity=0.09] (2.5, 0) ellipse ({0.6*\s} and {1.2*\s});
-                }
-                \draw[red!80!black, thick] (2.5, 0) ellipse (0.6 and 1.2);
-                \node[circle, fill=black!80, inner sep=1.2pt] at (2.5, 0) {}; % Piercing dot
-                \node[above, font=\large\bfseries] at (2.5, 1.4) {Gaussian 1};
-                \node[below, font=\normalsize, align=center] at (2.5, -1.3) {Opacity \\ $\alpha_1=0.4$};
-                \node[below, font=\normalsize\bfseries, text=blue!70!black] at (2.5, -2.3) {$T_1=1.00$};
+    %             % 4. Sorted 2D Gaussians (Alpha Compositing)
+    %             % Splat 1 (Target alpha 0.4 -> ~0.09 per layer)
+    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+    %                 \fill[red, opacity=0.09] (2.5, 0) ellipse ({0.6*\s} and {1.2*\s});
+    %             }
+    %             \draw[red!80!black, thick] (2.5, 0) ellipse (0.6 and 1.2);
+    %             \node[circle, fill=black!80, inner sep=1.2pt] at (2.5, 0) {}; % Piercing dot
+    %             \node[above, font=\large\bfseries] at (2.5, 1.4) {Gaussian 1};
+    %             \node[below, font=\normalsize, align=center] at (2.5, -1.3) {Opacity \\ $\alpha_1=0.4$};
+    %             \node[below, font=\normalsize\bfseries, text=blue!70!black] at (2.5, -2.3) {$T_1=1.00$};
                 
-                % Splat 2 (Target alpha 0.5 -> ~0.12 per layer)
-                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-                    \fill[green, opacity=0.12] (6, 0.3) ellipse ({0.7*\s} and {1.3*\s});
-                }
-                \draw[green!80!black, thick] (6, 0.3) ellipse (0.7 and 1.3);
-                \node[circle, fill=black!80, inner sep=1.2pt] at (6, 0) {}; % Piercing dot
-                \node[above, font=\large\bfseries] at (6, 1.8) {Gaussian 2};
-                \node[below, font=\normalsize, align=center] at (6, -1.3) {Opacity \\ $\alpha_2=0.5$};
-                \node[below, font=\normalsize\bfseries, text=blue!70!black] at (6, -2.3) {$T_2=0.60$};
+    %             % Splat 2 (Target alpha 0.5 -> ~0.12 per layer)
+    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+    %                 \fill[green, opacity=0.12] (6, 0.3) ellipse ({0.7*\s} and {1.3*\s});
+    %             }
+    %             \draw[green!80!black, thick] (6, 0.3) ellipse (0.7 and 1.3);
+    %             \node[circle, fill=black!80, inner sep=1.2pt] at (6, 0) {}; % Piercing dot
+    %             \node[above, font=\large\bfseries] at (6, 1.8) {Gaussian 2};
+    %             \node[below, font=\normalsize, align=center] at (6, -1.3) {Opacity \\ $\alpha_2=0.5$};
+    %             \node[below, font=\normalsize\bfseries, text=blue!70!black] at (6, -2.3) {$T_2=0.60$};
                 
-                % Splat 3 (Target alpha 0.8 -> ~0.27 per layer)
-                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-                    \fill[yellow, opacity=0.27] (9.5, -0.2) ellipse ({0.5*\s} and {1.0*\s});
-                }
-                \draw[yellow!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
-                \node[circle, fill=black!80, inner sep=1.2pt] at (9.5, 0) {}; % Piercing dot
-                \node[above, font=\large\bfseries] at (9.5, 1.2) {Gaussian 3};
-                \node[below, font=\normalsize, align=center] at (9.5, -1.3) {Opacity \\ $\alpha_3=0.8$};
-                \node[below, font=\normalsize\bfseries, text=blue!70!black] at (9.5, -2.3) {$T_3=0.30$};
+    %             % Splat 3 (Target alpha 0.8 -> ~0.27 per layer)
+    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+    %                 \fill[yellow, opacity=0.27] (9.5, -0.2) ellipse ({0.5*\s} and {1.0*\s});
+    %             }
+    %             \draw[yellow!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
+    %             \node[circle, fill=black!80, inner sep=1.2pt] at (9.5, 0) {}; % Piercing dot
+    %             \node[above, font=\large\bfseries] at (9.5, 1.2) {Gaussian 3};
+    %             \node[below, font=\normalsize, align=center] at (9.5, -1.3) {Opacity \\ $\alpha_3=0.8$};
+    %             \node[below, font=\normalsize\bfseries, text=blue!70!black] at (9.5, -2.3) {$T_3=0.30$};
                 
-                % 5. Early Stopping Barrier
-                \draw[dashed, red, very thick] (11.5, -2.5) -- (11.5, 2.5);
-                \node[red, font=\Large\bfseries, rotate=90] at (12, 0) {Early Stopping ($T_4 = 0.06 \approx 0$)};
+    %             % 5. Early Stopping Barrier
+    %             \draw[dashed, red, very thick] (11.5, -2.5) -- (11.5, 2.5);
+    %             \node[red, font=\Large\bfseries, rotate=90] at (12, 0) {Early Stopping ($T_4 = 0.06 \approx 0$)};
                 
-                % 6. Culled / Ignored Geometry
-                % Splat 4 (Ignored)
-                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-                    \fill[gray, opacity=0.07] (13.5, 0.4) ellipse ({0.6*\s} and {1.1*\s});
-                }
-                \draw[gray, dashed, thick] (13.5, 0.4) ellipse (0.6 and 1.1);
-                \node[circle, fill=gray!80!black, inner sep=1.2pt] at (13.5, 0) {}; % Piercing dot
-                \node[above, font=\large\bfseries, text=gray] at (13.5, 1.7) {Gaussian 4};
+    %             % 6. Culled / Ignored Geometry
+    %             % Splat 4 (Ignored)
+    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+    %                 \fill[gray, opacity=0.07] (13.5, 0.4) ellipse ({0.6*\s} and {1.1*\s});
+    %             }
+    %             \draw[gray, dashed, thick] (13.5, 0.4) ellipse (0.6 and 1.1);
+    %             \node[circle, fill=gray!80!black, inner sep=1.2pt] at (13.5, 0) {}; % Piercing dot
+    %             \node[above, font=\large\bfseries, text=gray] at (13.5, 1.7) {Gaussian 4};
                 
-                % Splat 5 (Ignored)
-                \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-                    \fill[gray, opacity=0.04] (15, -0.3) ellipse ({0.7*\s} and {0.9*\s});
-                }
-                \draw[gray, dashed, thick] (15, -0.3) ellipse (0.7 and 0.9);
-                \node[circle, fill=gray!80!black, inner sep=1.2pt] at (15, 0) {}; % Piercing dot
-                \node[above, font=\large\bfseries, text=gray] at (15.2, 0.8) {Gaussian 5};
+    %             % Splat 5 (Ignored)
+    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
+    %                 \fill[gray, opacity=0.04] (15, -0.3) ellipse ({0.7*\s} and {0.9*\s});
+    %             }
+    %             \draw[gray, dashed, thick] (15, -0.3) ellipse (0.7 and 0.9);
+    %             \node[circle, fill=gray!80!black, inner sep=1.2pt] at (15, 0) {}; % Piercing dot
+    %             \node[above, font=\large\bfseries, text=gray] at (15.2, 0.8) {Gaussian 5};
                 
-                \node[text=gray, font=\Large\bfseries, align=center] at (14.25, -1.9) {Geometry\\Ignored};
+    %             \node[text=gray, font=\Large\bfseries, align=center] at (14.25, -1.9) {Geometry\\Ignored};
                 
-            \end{tikzpicture}%
-        \end{figure}
-    }
+    %         \end{tikzpicture}%
+    %     \end{figure}
+    % }
 \end{frame}
 
 \begingroup

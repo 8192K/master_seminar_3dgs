@@ -1,6 +1,6 @@
 \subsection{Backward Pass}
 
-\begin{frame}{Backward Pass: Pipeline Architecture}
+\begin{frame}[label=backwardpass_pipeline]{Backward Pass: Pipeline Architecture}
     \centering
     \vspace{1.5em}
     \hspace*{-7.5mm}
@@ -45,6 +45,11 @@
         \node[below, font=\small\bfseries] at (12.25, -0.95) {One GPU Thread per 2D/3D Gaussian};
         
     \end{tikzpicture}%
+    }
+    \pdfcomment[opacity=0]{
+        - as with the forward pass, we subdivide the backward pass as well, this time into five phases. \textCR
+        - In principle we are moving backwards through the calculations made in the forward pass, starting with the color error \textCR
+        - This then propagates through 2D Gaussian splats and geometry, is being unproject into 3D space and finally we are adjusting the 3D Gaussian's attributes
     }
 \end{frame}
 
@@ -114,6 +119,10 @@
         
     \end{tikzpicture}%
     }
+    \pdfcomment[opacity=0]{
+        - As already simple examples for backpropagation tend to become very complex, we will only be looking at the maths of phases 1 and 2 and visit the remaining phases more on the surface. Because, as you can see here, starting with phase 3 we will have matrix gradients when calculating gradients for the covariance matrix for example and this complexity would very much out of scope for this presentation. \textCR
+        - So I'm only showing the gradient flow here, from intermediate gradient to final attribute gradient. For example with the color error, we can calculate the opacity gradient which can then be used to adjust the covariance matrix etc.
+    }    
 \end{frame}
 
 \begin{frame}{Backward Pass: Loss Function \& Phase 1}
@@ -135,6 +144,10 @@
         \item A positive gradient indicates an overestimation of color, negative indicates underestimation, and the magnitude dictates the degree of adjustment required:
         $$\darkmathhighlight{ \frac{\partial L}{\partial C_p} = \frac{1-\lambda}{N} \cdot sign(C_p - O_p) + \lambda \frac{\partial \mathcal{L}_{D-SSIM}}{\partial C_p} }$$
     \end{itemize}
+    \pdfcomment[opacity=0]{
+        - what is D-SSIM \textCR
+        - explain resulting gradient for phase 1
+    }
 \end{frame}
 
 \begin{frame}{Backward Pass: Phase 2}
@@ -168,11 +181,18 @@
             \frac{\partial L}{\partial C_p} \cdot \frac{\partial C_p}{\partial \alpha_i} = 
             \frac{\partial L}{\partial C_p} \cdot T_i (c_i - C_{behind})} $$
     \end{itemize}
+
+    \pdfcomment[opacity=0]{
+        - In phase 2 we can see that we can use the color error gradients to calculate the color and opacity gradients using the chain rule (mark elements) \textCR
+        - This means the gradients adjust the color based on its contribution or the opacity if the pixel error is reduced more effectively by the Gaussians color than the accumulated background color behind it. \textCR
+        - (transition to pipeline)
+    }
+
 \end{frame}
 
 \begingroup
     \addtocounter{framenumber}{-1}
-    \againframe{gradient_flow}
+    \againframe{backwardpass_pipeline}
 \endgroup
 
 \begin{frame}{Backward Pass: Phases 3 to 5}
@@ -202,6 +222,10 @@
         \item The gradients flow backward through the 3D covariance matrix assembly.
         \item Adjustments are mapped directly into the raw, latent space variables for scale, rotation, and base opacity.
     \end{itemize}
+
+    \pdfcomment[opacity=0]{
+        - This completes the backward pass. But before the next forward pass with a new image can start, there is another important step in between:
+    }
 \end{frame}
 
 \begin{frame}{Adaptive Density Control \& Optimization}
@@ -232,69 +256,79 @@
         \item Rather than standard gradient descent, 3DGS utilizes the Adam optimizer.
         \item Adam takes each parameter's history into account, smoothing out updates so that 3D Gaussians gently morph into their correct geometric shapes.
     \end{itemize}
-\end{frame}
 
-
-\begin{frame}{The Detailed Training Cycle}
-    \centering
-    \hspace*{-8mm}
-    % Wraps the TikZ diagram to ensure it fits the slide width perfectly
-    \resizebox{1.1\linewidth}{!}{%
-    \begin{tikzpicture}[
-        box/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=2.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
-        final/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=1.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
-        phase/.style={rectangle, draw=blue!80!black, fill=blue!5, thick, rounded corners=2pt, minimum width=2.0cm, minimum height=0.9cm, align=center, font=\scriptsize\bfseries},
-        decision/.style={diamond, draw=blue!60!black, fill=blue!10, thick, align=center, aspect=1.4, font=\scriptsize\bfseries, inner sep=1pt},
-        arrow/.style={-Latex, thick, blue!70!black, rounded corners=4pt}
-    ]
-        % --- Main horizontal axis (Y = 0) ---
-        \node[box] (init) at (2.0, -0.5) {Initialization \\ (Point Cloud)};
-        \node[box] (select) at (5.5, -0.5) {1. Select Image \\ \& Camera Pose};
-        \node[decision] (loss) at (11.6, -0.5) {3. Loss Function \\ Converged?};
-        \node[final, fill=green!10, draw=green!50!black] (end) at (15.5, -0.5) {Final \\ 3D Scene};
-        
-        % --- 2. Forward Pass Chain (Y = 2.5) ---
-        \node[font=\small\bfseries, text=blue!80!black] at (8.0, 3.4) {2. Forward Pass};
-        
-        \node[phase] (F1) at (2.0, 2.5) {Phase 1\\Attributes};
-        \node[phase] (F2) at (4.4, 2.5) {Phase 2\\3D Matrix};
-        \node[phase] (F3) at (6.8, 2.5) {Phase 3\\Projection};
-        \node[phase] (F4) at (9.2, 2.5) {Phase 4\\Tile Mapping};
-        \node[phase] (F5) at (11.6, 2.5) {Phase 5\\Radix Sort};
-        \node[phase] (F6) at (14.0, 2.5) {Phase 6\\Rasterization};
-        
-        % --- 4. Backward Pass Chain (Y = -2.5) ---
-        \node[font=\small\bfseries, text=blue!80!black] at (8.0, -2.6) {4. Backward Pass};
-        
-        \node[phase] (B1) at (13.6, -3.5) {Phase 1\\Color Error};
-        \node[phase] (B2) at (10.8, -3.5) {Phase 2\\2D Splat};
-        \node[phase] (B3) at (8.0, -3.5) {Phase 3\\2D Geometry};
-        \node[phase] (B4) at (5.2, -3.5) {Phase 4\\Unprojection};
-        \node[phase] (B5) at (2.4, -3.5) {Phase 5\\Attributes};
-        
-        % --- Horizontal entry and exit arrows ---
-        \draw[arrow] (0.2, -0.5) -- (init.west);
-        \draw[arrow] (init.east) -- (select.west);
-        \draw[arrow] (loss.east) -- node[above, font=\scriptsize, text=blue!80!black] {Yes} (end.west);
-        
-        % --- Arrows forming the loop (Forward) ---
-        % Custom step-routing wraps neatly around the left and right sides
-        \draw[arrow] (select.north) -- (5.5, 1.3) -| (F1.south);
-        \draw[arrow] (F1.east) -- (F2.west);
-        \draw[arrow] (F2.east) -- (F3.west);
-        \draw[arrow] (F3.east) -- (F4.west);
-        \draw[arrow] (F4.east) -- (F5.west);
-        \draw[arrow] (F5.east) -- (F6.west);
-        \draw[arrow] (F6.south) |- (11.6, 1.3) -- (loss.north);
-        
-        % --- Arrows forming the loop (Backward) ---
-        \draw[arrow] (loss.south) -- node[right, font=\scriptsize, text=blue!80!black] {No} (11.6, -2.2) -- (13.6, -2.2) -- (B1.north);
-        \draw[arrow] (B1.west) -- (B2.east);
-        \draw[arrow] (B2.west) -- (B3.east);
-        \draw[arrow] (B3.west) -- (B4.east);
-        \draw[arrow] (B4.west) -- (B5.east);
-        \draw[arrow] (B5.north) |- (5.5, -2.2) -- (select.south);
-        
-    \end{tikzpicture}%
+    \pdfcomment[opacity=0]{
+        (jump to training cycle directly) \textCR
+        - mention novel view synthesis
     }
 \end{frame}
+
+\begingroup
+    \addtocounter{framenumber}{-1}
+    \againframe{training_cycle}
+\endgroup
+
+% \begin{frame}{The Detailed Training Cycle}
+%     \centering
+%     \hspace*{-8mm}
+%     % Wraps the TikZ diagram to ensure it fits the slide width perfectly
+%     \resizebox{1.1\linewidth}{!}{%
+%     \begin{tikzpicture}[
+%         box/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=2.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
+%         final/.style={rectangle, draw=blue!60!black, fill=blue!10, rounded corners, thick, minimum width=1.8cm, minimum height=1cm, align=center, font=\scriptsize\bfseries},
+%         phase/.style={rectangle, draw=blue!80!black, fill=blue!5, thick, rounded corners=2pt, minimum width=2.0cm, minimum height=0.9cm, align=center, font=\scriptsize\bfseries},
+%         decision/.style={diamond, draw=blue!60!black, fill=blue!10, thick, align=center, aspect=1.4, font=\scriptsize\bfseries, inner sep=1pt},
+%         arrow/.style={-Latex, thick, blue!70!black, rounded corners=4pt}
+%     ]
+%         % --- Main horizontal axis (Y = 0) ---
+%         \node[box] (init) at (2.0, -0.5) {Initialization \\ (Point Cloud)};
+%         \node[box] (select) at (5.5, -0.5) {1. Select Image \\ \& Camera Pose};
+%         \node[decision] (loss) at (11.6, -0.5) {3. Loss Function \\ Converged?};
+%         \node[final, fill=green!10, draw=green!50!black] (end) at (15.5, -0.5) {Final \\ 3D Scene};
+        
+%         % --- 2. Forward Pass Chain (Y = 2.5) ---
+%         \node[font=\small\bfseries, text=blue!80!black] at (8.0, 3.4) {2. Forward Pass};
+        
+%         \node[phase] (F1) at (2.0, 2.5) {Phase 1\\Attributes};
+%         \node[phase] (F2) at (4.4, 2.5) {Phase 2\\3D Matrix};
+%         \node[phase] (F3) at (6.8, 2.5) {Phase 3\\Projection};
+%         \node[phase] (F4) at (9.2, 2.5) {Phase 4\\Tile Mapping};
+%         \node[phase] (F5) at (11.6, 2.5) {Phase 5\\Radix Sort};
+%         \node[phase] (F6) at (14.0, 2.5) {Phase 6\\Rasterization};
+        
+%         % --- 4. Backward Pass Chain (Y = -2.5) ---
+%         \node[font=\small\bfseries, text=blue!80!black] at (8.0, -2.6) {4. Backward Pass};
+        
+%         \node[phase] (B1) at (13.6, -3.5) {Phase 1\\Color Error};
+%         \node[phase] (B2) at (10.8, -3.5) {Phase 2\\2D Splat};
+%         \node[phase] (B3) at (8.0, -3.5) {Phase 3\\2D Geometry};
+%         \node[phase] (B4) at (5.2, -3.5) {Phase 4\\Unprojection};
+%         \node[phase] (B5) at (2.4, -3.5) {Phase 5\\Attributes};
+%         %\node[box] (B6) at (-0.4, -3.5) {Adaptive\\Density Control};
+        
+%         % --- Horizontal entry and exit arrows ---
+%         \draw[arrow] (0.2, -0.5) -- (init.west);
+%         \draw[arrow] (init.east) -- (select.west);
+%         \draw[arrow] (loss.east) -- node[above, font=\scriptsize, text=blue!80!black] {Yes} (end.west);
+        
+%         % --- Arrows forming the loop (Forward) ---
+%         % Custom step-routing wraps neatly around the left and right sides
+%         \draw[arrow] (select.north) -- (5.5, 1.3) -| (F1.south);
+%         \draw[arrow] (F1.east) -- (F2.west);
+%         \draw[arrow] (F2.east) -- (F3.west);
+%         \draw[arrow] (F3.east) -- (F4.west);
+%         \draw[arrow] (F4.east) -- (F5.west);
+%         \draw[arrow] (F5.east) -- (F6.west);
+%         \draw[arrow] (F6.south) |- (11.6, 1.3) -- (loss.north);
+        
+%         % --- Arrows forming the loop (Backward) ---
+%         \draw[arrow] (loss.south) -- node[right, font=\scriptsize, text=blue!80!black] {No} (11.6, -2.2) -- (13.6, -2.2) -- (B1.north);
+%         \draw[arrow] (B1.west) -- (B2.east);
+%         \draw[arrow] (B2.west) -- (B3.east);
+%         \draw[arrow] (B3.west) -- (B4.east);
+%         \draw[arrow] (B4.west) -- (B5.east);
+%         \draw[arrow] (B5.north) |- (5.5, -2.2) -- (select.south);
+        
+%     \end{tikzpicture}%
+%     }
+% \end{frame}

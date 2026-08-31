@@ -48,6 +48,13 @@
         \item Freed from the training overhead and powered by the raw speed of the tile-based rasterizer, 3DGS quickly reaches real-time rendering levels.
     \end{itemize}
 
+    \pdfcomment[opacity=0]{
+        - Assuming the loss function converged, we now have the final reconstructed 3D scene available for rendering novel views. \textCR
+        - In 3DGS, this is quite simple as all the steps required for NVS are already there. (describe) \textCR
+        \textCR
+        - This concludes the presentation on 3D Gaussian Splatting. We've seen that ... \textCR
+        (- videos?)
+    }
 \end{frame}
 
 \section{Summary and Discussion}
@@ -55,12 +62,13 @@
 \begin{frame}{Summary and Discussion}
     \begin{itemize}
         \justifying
-        \item 3D Gaussian Splatting is a learnable and explicit radiance field representation for 3D Reconstruction, abandoning neural networks.\vspace{1em}
-        \item By combining multiple existing approaches and technologies, adding new ideas, and mapping them onto modern GPU hardware, Kerbl. et al made it possible to have real-time rendering of reconstructed 3D scenes for the first time.
+        \item 3D Gaussian Splatting is a learnable and explicit radiance field representation for 3D Reconstruction, abandoning neural networks.\vspace{0.5em}
+        \item Kerbl et al. combined multiple existing approaches and technologies, added new ideas, and mapped them onto modern GPU hardware.\vspace{0.5em}
+        \item We analyzed the training procedure showing in detail how Kerbl. et al made it possible to have real-time rendering of reconstructed 3D scenes for the first time.
     \end{itemize}
     \vspace{3em}
     \centering
-    Thank you for your attention. I am looking forward to answering your questions.
+    Thank you for your attention. I am looking forward to taking your questions.
 \end{frame}
 
 \appendix
