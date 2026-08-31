@@ -179,39 +179,41 @@
             \textbf{Details}
             \vspace{1em}
             
-            \only<1>{
-                Introduced by Kerbl et al. at INRIA in France in late 2023, 3D Gaussian Splatting (3DGS) combines existing concepts to create a learnable explicit radiance field representation.\\
-                \vspace{1em}
-                The publication had a very high impact in the field with over 10,000 citations in three years.
-            }
-            \only<2>{
-                A 3D Gaussian is an ellipsoid ``fuzzy blob'' that loses opacity towards its edges and can take shapes ranging from perfect spheres to elongated needles or flat shapes.\\
-                \vspace{1em}
-                Using them as base primitives bypasses previous issues with explicit fields and allows for arbitrary positional precision.
-            }
-            \only<3>{
-                Using clever decompositions of 3D Gaussians, they become differentiable and eligible for standard gradient descent backpropagation.\\
-                \vspace{1em}
-                Most importantly, this means 3DGS operates completely without neural networks which removes the ``blackbox'' associated with them.
-            }
-            % \only<4>{
-            %     Unlike the neural network ``black box'' of NeRFs, 3D Gaussians provide direct editability of the scene.\\
-            %     \vspace{1em}
-            %     This makes scene modifications, such as additions or lighting changes, highly accessible for downstream applications.
-            % }
-            \only<4>{
-                Kerbl et al. mapped their architecture exhaustively onto modern GPU hardware.\\
-                \vspace{1em}
-                The centerpiece is the tile-based rasterizer, which allows real-time novel-view synthesis at 1080p resolution while matching or improving upon state-of-the-art NeRF quality.
-            }
-            \only<3>{\pdfcomment[opacity=0]{
-                - Editability, extensibility
-            }}
-            \only<4>{\pdfcomment[opacity=0]{
-                - For the engineering side of the publication...\textCR
-                \textCR
-                - Now that we know what 3DGS is in broad terms, let's have a look at what a 3D Gaussian or a Gaussian in general is.
-            }}
+            \begin{overlayarea}{\textwidth}{4.3cm}
+                \only<1>{
+                    Introduced by Kerbl et al. at INRIA in France in late 2023, 3D Gaussian Splatting (3DGS) combines existing concepts to create a learnable explicit radiance field representation.\\
+                    \vspace{1em}
+                    The publication had a very high impact in the field with over 10,000 citations in three years.
+                }
+                \only<2>{
+                    A 3D Gaussian is an ellipsoid ``fuzzy blob'' that loses opacity towards its edges and can take shapes ranging from perfect spheres to elongated needles or flat shapes.\\
+                    \vspace{1em}
+                    Using them as base primitives bypasses previous issues with explicit fields and allows for arbitrary positional precision.
+                }
+                \only<3>{
+                    Using clever decompositions of 3D Gaussians, they become differentiable and eligible for standard gradient descent backpropagation.\\
+                    \vspace{1em}
+                    Most importantly, this means 3DGS operates completely without neural networks which removes the ``blackbox'' associated with them.
+                }
+                % \only<4>{
+                %     Unlike the neural network ``black box'' of NeRFs, 3D Gaussians provide direct editability of the scene.\\
+                %     \vspace{1em}
+                %     This makes scene modifications, such as additions or lighting changes, highly accessible for downstream applications.
+                % }
+                \only<4>{
+                    Kerbl et al. mapped their architecture exhaustively onto modern GPU hardware.\\
+                    \vspace{1em}
+                    The centerpiece is the tile-based rasterizer, which allows real-time novel-view synthesis at 1080p resolution while matching or improving upon state-of-the-art NeRF quality.
+                }
+                \only<3>{\pdfcomment[opacity=0]{
+                    - Editability, extensibility
+                }}
+                \only<4>{\pdfcomment[opacity=0]{
+                    - For the engineering side of the publication...\textCR
+                    \textCR
+                    - Now that we know what 3DGS is in broad terms, let's have a look at what a 3D Gaussian or a Gaussian in general is.
+                }}
+            \end{overlayarea}
         \end{column}
     \end{columns}
 \end{frame}
