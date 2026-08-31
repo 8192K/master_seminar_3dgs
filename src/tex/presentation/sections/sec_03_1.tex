@@ -150,7 +150,7 @@
     \begin{itemize}
         \justifying
         \item The GPU is running one GPU thread per 3D Gaussian.
-        \item Raw values optimized during training are converted from latent space back into physical space.
+        \item Raw values optimized during backpropagation are converted.
         \item Opacity is bounded to $(0,1)$ using a sigmoid function, scale uses the exponential function, and the rotational quaternion is normalized.
     \end{itemize}
     
@@ -167,96 +167,102 @@
 \end{frame}
 
 \begin{frame}{Forward Pass: Phase 3}
-    % Overlay 1: Text only
-    \only<1>{
-        \textbf{Phase 3: Projection from 3D to 2D}
-        \begin{itemize}
-            \justifying
-            \item Converts 3D Gaussians (ellipsoids) in world space into flat 2D Gaussians (ellipses) in image space.
-            \item Employs a linear affine approximation (the Jacobian matrix $J$) of a standard non-linear pinhole projection.
-            \item The 3D matrix is rotated into view space via $W_{rot}$ and then projected:
-            $$ \darkmathhighlight{\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^{T} J^{T}} $$
-        \end{itemize}
-    }
     
-    % Overlay 2: Graphic only (replaces the text on the same frame number)
-    \only<2>{
-        \begin{figure}
+    \textbf{Phase 3: Projection from 3D to 2D}
+    \begin{itemize}
+        \justifying
+        \item Converts 3D Gaussians (ellipsoids) in world space into flat 2D Gaussians (ellipses) in image space.
+        \item Uses a linear affine approximation to keep the 2D Gaussian elliptic (Jacobian $J$).
+        \item The 3D matrix is rotated into view space via camera matrix $W_{rot}$ and then projected:
+    \end{itemize}
+
+    \pause
+
+    \vspace*{-2mm}
+    \begin{columns}[c]
+        \begin{column}{0.33\textwidth}
+            $$
+            \darkmathhighlight{\Sigma_{2D} = J W_{rot} \Sigma_{3D} W_{rot}^{T} J^{T}}
+            $$
+        \end{column}
+
+        \begin{column}{0.67\textwidth}
             \centering
-            \begin{tikzpicture}[scale=0.9, every node/.style={transform shape}]
-        
-                % ==========================================
-                % 1. 3D GAUSSIAN (WORLD/VIEW SPACE)
-                % ==========================================
-                \coordinate (mu3D) at (0, 0);
+            \begin{figure}
+                \begin{tikzpicture}[scale=0.6, every node/.style={transform shape}]
+            
+                    % ==========================================
+                    % 1. 3D GAUSSIAN (WORLD/VIEW SPACE)
+                    % ==========================================
+                    \coordinate (mu3D) at (0, 0);
 
-                % Title
-                \node[blue!80!black, font=\Large\bfseries, align=center] at (0, 3) {3D World Space};
+                    % Title
+                    \node[blue!80!black, font=\Large\bfseries, align=center] at (0, 3) {3D World Space};
 
-                % 3D Fuzzy Blob
-                \foreach \i in {1,2,3,4,5,6} {
-                    \pgfmathsetmacro{\opac}{0.85 - \i*0.13}
-                    \fill[green!50!black, opacity=\opac, rotate around={20:(mu3D)}]
-                        (mu3D) ellipse ({2.0 - \i*0.3} and {1.3 - \i*0.2});
-                }
-
-                % 3D Coordinate Stub representing Covariance (\Sigma_{3D})
-                % Arrows point along the principal axes of the 3D ellipsoid
-                \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(20:1.8) node[right, font=\scriptsize] {}; % Major axis X
-                \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(110:1.1) node[above, font=\scriptsize] {}; % Minor axis Y
-                \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(230:0.9) node[below left, font=\scriptsize] {}; % Depth axis Z
-
-                % Center Point and Label
-                \node[circle, fill=black, inner sep=1.8pt] at (mu3D) {};
-                \node[below right, font=\small\bfseries, align=left, fill=white, fill opacity=0.7, text opacity=1, inner sep=2pt, rounded corners] 
-                    at (0.1, -0.2) {$\mu_{3D}$ \\ $\Sigma_{3D}$};
-
-
-                % ==========================================
-                % 2. MAPPING / PROJECTION ARROW
-                % ==========================================
-                \draw[-Latex, line width=1.5mm, gray!60] (2.2, 0) -- (5.5, 0) 
-                    node[midway, above, font=\large\bfseries, text=blue!80!black, align=center, yshift=2mm] {Projection \\ (Jacobian J)};
-
-
-                % ==========================================
-                % 3. 2D GAUSSIAN (IMAGE SPACE)
-                % ==========================================
-                \coordinate (mu2D) at (9, 0);
-
-                % Scope for Image Plane with a gentle rotation
-                \begin{scope}[shift={(mu2D)}, rotate=12] 
-                    
-                    % 16x16 Tile Grid Representation
-                    \fill[blue!5, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
-                    \draw[step=1.4cm, blue!20, thick] (-2.8, -2.8) grid (2.8, 2.8);
-                    \draw[blue!60, very thick, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
-
-                    % Label for Image Space (Rotation inherits from scope)
-                    \node[blue!80!black, font=\Large\bfseries, anchor=south] at (0, 3) {2D Image Space};
-
-                    % 2D Fuzzy Blob (Flattened via projection)
+                    % 3D Fuzzy Blob
                     \foreach \i in {1,2,3,4,5,6} {
                         \pgfmathsetmacro{\opac}{0.85 - \i*0.13}
-                        \fill[green!50!black, opacity=\opac, rotate around={35:(0,0)}]
-                            (0,0) ellipse ({1.7 - \i*0.25} and {0.7 - \i*0.1});
+                        \fill[green!50!black, opacity=\opac, rotate around={20:(mu3D)}]
+                            (mu3D) ellipse ({2.0 - \i*0.3} and {1.3 - \i*0.2});
                     }
 
-                    % 2D Coordinate Stub representing Covariance (\Sigma_{2D})
-                    % Arrows point strictly along the 2D principal axes
-                    \draw[-Latex, very thick, red!80!black] (0,0) -- ++(35:1.6) node[right, font=\scriptsize] {}; % Major axis U
-                    \draw[-Latex, very thick, red!80!black] (0,0) -- ++(125:0.6) node[above, font=\scriptsize] {}; % Minor axis V
+                    % 3D Coordinate Stub representing Covariance (\Sigma_{3D})
+                    % Arrows point along the principal axes of the 3D ellipsoid
+                    \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(20:1.8) node[right, font=\scriptsize] {}; % Major axis X
+                    \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(110:1.1) node[above, font=\scriptsize] {}; % Minor axis Y
+                    \draw[-Latex, very thick, blue!80!black] (mu3D) -- ++(230:0.9) node[below left, font=\scriptsize] {}; % Depth axis Z
 
                     % Center Point and Label
-                    \node[circle, fill=black, inner sep=1.8pt] at (0,0) {};
-                    \node[below right, font=\small\bfseries, align=left, fill=white, fill opacity=0.7, text opacity=1, inner sep=2pt, rounded corners] 
-                        at (0.1, -0.2) {$\mu_{2D}$ \\ $\Sigma_{2D}$};
-                        
-                \end{scope}
+                    \node[circle, fill=black, inner sep=1.8pt] at (mu3D) {};
+                    \node[below right, font=\normalsize\bfseries, align=left, fill=white, fill opacity=0.7, text opacity=1, inner sep=2pt, rounded corners] 
+                        at (0.1, -0.2) {$\mu_{3D}$ \\ $\Sigma_{3D}$};
 
-            \end{tikzpicture}
-        \end{figure}
-    }
+
+                    % ==========================================
+                    % 2. MAPPING / PROJECTION ARROW
+                    % ==========================================
+                    \draw[-Latex, line width=1.5mm, gray!60] (2.2, 0) -- (5.5, 0) 
+                        node[midway, above, font=\large\bfseries, text=blue!80!black, align=center, yshift=2mm] {Projection \\ (Jacobian J)};
+
+
+                    % ==========================================
+                    % 3. 2D GAUSSIAN (IMAGE SPACE)
+                    % ==========================================
+                    \coordinate (mu2D) at (9, 0);
+
+                    % Scope for Image Plane with a gentle rotation
+                    \begin{scope}[shift={(mu2D)}, rotate=12] 
+                        
+                        % 16x16 Tile Grid Representation
+                        \fill[blue!5, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
+                        \draw[step=1.4cm, blue!20, thick] (-2.8, -2.8) grid (2.8, 2.8);
+                        \draw[blue!60, very thick, rounded corners=2pt] (-2.8, -2.8) rectangle (2.8, 2.8);
+
+                        % Label for Image Space (Rotation inherits from scope)
+                        \node[blue!80!black, font=\Large\bfseries, anchor=south] at (0, 3) {2D Image Space};
+
+                        % 2D Fuzzy Blob (Flattened via projection)
+                        \foreach \i in {1,2,3,4,5,6} {
+                            \pgfmathsetmacro{\opac}{0.85 - \i*0.13}
+                            \fill[green!50!black, opacity=\opac, rotate around={35:(0,0)}]
+                                (0,0) ellipse ({1.7 - \i*0.25} and {0.7 - \i*0.1});
+                        }
+
+                        % 2D Coordinate Stub representing Covariance (\Sigma_{2D})
+                        % Arrows point strictly along the 2D principal axes
+                        \draw[-Latex, very thick, red!80!black] (0,0) -- ++(35:1.6) node[right, font=\scriptsize] {}; % Major axis U
+                        \draw[-Latex, very thick, red!80!black] (0,0) -- ++(125:0.6) node[above, font=\scriptsize] {}; % Minor axis V
+
+                        % Center Point and Label
+                        \node[circle, fill=black, inner sep=1.8pt] at (0,0) {};
+                        \node[below right, font=\normalsize\bfseries, align=left, fill=white, fill opacity=0.7, text opacity=1, inner sep=2pt, rounded corners] 
+                            at (0.1, -0.2) {$\mu_{2D}$ \\ $\Sigma_{2D}$};
+                            
+                    \end{scope}
+                \end{tikzpicture}
+            \end{figure}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begingroup
