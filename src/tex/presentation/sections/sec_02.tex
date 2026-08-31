@@ -69,9 +69,9 @@
             
             \alt<1>{\textbf{\textcolor{blue}{The Validity Problem}}}{\textcolor{gray}{The Validity Problem}}\par\vspace{1em}
             \alt<2>{\textbf{\textcolor{blue}{Core Decomposition}}}{\textcolor{gray}{Core Decomposition}}\par\vspace{1em}
-            \alt<3>{\textbf{\textcolor{blue}{Scaling Values}}}{\textcolor{gray}{Scaling Values}}\par\vspace{1em}
-            \alt<4>{\textbf{\textcolor{blue}{Rotational Quaternion}}}{\textcolor{gray}{Rotational Quaternion}}\par\vspace{1em}
-            \alt<5>{\textbf{\textcolor{blue}{Guaranteed Validity}}}{\textcolor{gray}{Guaranteed Validity}}
+            \alt<3>{\textbf{\textcolor{blue}{Decomposed Components}}}{\textcolor{gray}{Decomposed Components}}\par\vspace{1em}
+            %\alt<4>{\textbf{\textcolor{blue}{Rotational Quaternion}}}{\textcolor{gray}{Rotational Quaternion}}\par\vspace{1em}
+            \alt<4>{\textbf{\textcolor{blue}{Guaranteed Validity}}}{\textcolor{gray}{Guaranteed Validity}}
         \end{column}
 
         % Right Column: Synchronized Explanations
@@ -81,6 +81,7 @@
             \vspace{1em}
 
             \begin{overlayarea}{\textwidth}{4.5cm}
+                \justifying 
                 \only<1>{
                     To work with gradient descent, the covariance matrix $\Sigma$ must be differentiable and remain positive semi-definite (eigenvalues $\ge 0$) to be geometrically valid.\\
                     \vspace{1em}
@@ -91,20 +92,22 @@
                     $$ \darkmathhighlight{\Sigma = RSS^{T}R^{T} \hspace{2mm}\text{with}\hspace{2mm} \Delta = S^2, Q=R }$$
                 }
                 \only<3>{
-                    The diagonal scaling matrix $S$ is further decomposed into three distinct scaling values $(s_{1}, s_{2}, s_{3})$. These represent the roots of the eigenvalues of $\Sigma$.
-                }
-                \only<4>{
-                    The rotational matrix $R$ is decomposed into a four-value quaternion $(w, x, y, z)$:\\
+                    The diagonal scaling matrix $S$ is further decomposed into three distinct scaling values. These represent the roots of the eigenvalues of $\Sigma$.\\
                     \vspace{1em}
-                    \resizebox{\linewidth}{!}{%
-                    $ \darkmathhighlight{R = \begin{bmatrix}
-                    1-2(y^{2}+z^{2}) & 2(xy-wz) & 2(xz+wy) \\
-                    2(xy+wz) & 1-2(x^{2}+z^{2}) & 2(yz-wx) \\
-                    2(xz-wy) & 2(yz+wx) & 1-2(x^{2}+y^{2})
-                    \end{bmatrix}} $
-                    }
+                    The rotational matrix $R$ is decomposed into a four-value \textit{quaternion}.
                 }
-                \only<5>{
+                % \only<4>{
+                %     $:\\
+                %     \vspace{1em}
+                %     \resizebox{\linewidth}{!}{%
+                %     $ \darkmathhighlight{R = \begin{bmatrix}
+                %     1-2(y^{2}+z^{2}) & 2(xy-wz) & 2(xz+wy) \\
+                %     2(xy+wz) & 1-2(x^{2}+z^{2}) & 2(yz-wx) \\
+                %     2(xz-wy) & 2(yz+wx) & 1-2(x^{2}+y^{2})
+                %     \end{bmatrix}} $
+                %     }
+                % }
+                \only<4>{
                     3DGS only stores and optimizes these 7 specific values for each 3D Gaussian.\\
                     \vspace{1em}
                     Because an eigendecomposition is always positive semi-definite, constructing a new covariance matrix from these components is guaranteed to be geometrically valid.
@@ -112,7 +115,8 @@
             \end{overlayarea}
         \end{column}
     \end{columns}
-    \only<5>{\pdfcomment[opacity=0]{
+    \only<4>{\pdfcomment[opacity=0]{
+        - So we are passing a decomposed covariance matrix into backpropagation where it and other attributes are being adjusted and the Gaussian remains valid at all times.
         - with an understanding of the base primitive, we can now dissect the training procedure. (directly proceed to training cycle)
     }}
 \end{frame}
