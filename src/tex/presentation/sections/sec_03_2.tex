@@ -187,14 +187,20 @@
 \end{frame}
 
 \begin{frame}{Adaptive Density Control}
-    \textbf{Adaptive Density Control}
     \begin{itemize}
         \justifying
         \item Steps in every 100 iterations to counter over-reconstruction (covering too much geometry) and under-reconstruction (too few Gaussians).
-        \item \textbf{Splitting:} Over-reconstructing Gaussians are split into two smaller ones.
-        \item \textbf{Cloning:} Under-reconstructing Gaussians are cloned.
+        %\item \textbf{Splitting:} Over-reconstructing Gaussians are split into two smaller ones.
+        %\item \textbf{Cloning:} Under-reconstructing Gaussians are cloned.
         %\item \textbf{Pruning \& Opacity Reset:} 3D Gaussians with extremely low opacity or unbound scale are routinely deleted.
     \end{itemize}
+
+    \vspace{2mm}
+    {
+        \centering
+        \includegraphics[width=0.65\linewidth]{../figures/6-Figure4-1.png}\\
+        \centering \tiny Graphic extracted from Kerbl et al. \cite{kerbl3DGaussianSplatting2023}
+    }
 
     \pdfcomment[opacity=0]{
         - housekeeping \textCR
@@ -202,41 +208,6 @@
         - mention novel view synthesis
     }
 \end{frame}
-
-% \begin{frame}{Adaptive Density Control \& Optimization}
-%     \textbf{Adaptive Density Control}
-%     \begin{itemize}
-%         \justifying
-%         \item Steps in every 100 iterations to counter over-reconstruction (covering too much geometry) and under-reconstruction (too few Gaussians).
-%         \item \textbf{Splitting:} Over-reconstructing Gaussians are split into two smaller ones.
-%         \item \textbf{Cloning:} Under-reconstructing Gaussians are cloned.
-%     \end{itemize}
-
-%     \pause
-%     \vspace{0.5em}
-
-%     \textbf{Pruning \& Opacity Reset}
-%     \begin{itemize}
-%         \justifying
-%         \item 3D Gaussians with extremely low opacity or unbound scale are routinely deleted.
-%         \item Every 3,000 iterations, the base opacity is reset to almost 0 for all Gaussians. This forces unimportant Gaussians to fade out completely and be pruned.
-%     \end{itemize}
-
-%     \pause
-%     \vspace{0.5em}
-
-%     \textbf{Optimization Step}
-%     \begin{itemize}
-%         \justifying
-%         \item Rather than standard gradient descent, 3DGS utilizes the Adam optimizer.
-%         \item Adam takes each parameter's history into account, smoothing out updates so that 3D Gaussians gently morph into their correct geometric shapes.
-%     \end{itemize}
-
-%     \pdfcomment[opacity=0]{
-%         (jump to training cycle directly) \textCR
-%         - mention novel view synthesis
-%     }
-% \end{frame}
 
 \begingroup
     \addtocounter{framenumber}{-1}
