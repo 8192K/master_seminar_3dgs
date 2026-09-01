@@ -21,12 +21,31 @@
         - 3D Gaussian Splatting is another technology in the field of 3D reconstruction\textCR
         - It takes its motivation directly from the shortcomings of neural radiance fields which Carmen presented just before\textCR
         - implicit vs explicit \textCR
+        - Kerbl 2023, young paper, highly influential
         \textCR
         \textCR
         - Let's first look at the agenda. After a short background section, we'll start by examining the 3D Gaussian data structure before we dissect the training procedure in more detail, focussing on the forward pass. We'll finish by showing how the rendering process works, also called novel-view synthesis.\textCR
     }
 \end{frame}
 
+\begingroup
+    \setbeamertemplate{footline}{%
+            \leavevmode%
+            \hbox{\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm plus1fil,rightskip=.3cm]{author in head/foot}%
+            \usebeamerfont{author in head/foot}\hfill\insertshortauthor
+            \end{beamercolorbox}%
+            \begin{beamercolorbox}[wd=.7\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm,rightskip=.3cm plus1fil]{title in head/foot}%
+            \usebeamerfont{title in head/foot}\insertshorttitle\hfill%
+            \end{beamercolorbox}}%
+            \vskip0pt%
+        }
+        \addtocounter{framenumber}{-1}
+    \begin{frame}{Agenda}
+        \tableofcontents
+    \end{frame}
+\endgroup
+
+\showsectiontocfalse
 \section{Background}
 
 % \begin{frame}{Background: From NeRFs to 3D Gaussians}
@@ -71,7 +90,7 @@
 %     \end{columns}
 % \end{frame}
 
-\begin{frame}{3D Reconstruction Terminology}
+\begin{frame}{Background}
     \begin{columns}[T]
         % Left Column: Spotlighted Concepts
         \begin{column}{0.35\textwidth}

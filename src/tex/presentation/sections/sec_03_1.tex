@@ -62,7 +62,7 @@
                 \only<1>{
                     The 3DGS algorithm requires initial geometry, which is commonly derived from a set of input images.\\
                     \vspace{1em}
-                    Because camera poses are usually unknown, Structure from Motion (SfM) software like COLMAP is used to solve a geometric optimization problem, providing an accurate 3D point cloud.
+                    Because camera poses are usually unknown, Structure from Motion (SfM) or similar algorithms are used to solve a geometric optimization problem, providing an accurate 3D point cloud.
                 }
                 \only<2>{
                     As another result from SfM, each input image is assigned a camera matrix~$W$ which contains the camera's orientation in world space.
@@ -380,118 +380,10 @@
             \end{figure}
         \end{column}
     \end{columns}
-    % \only<1-2>{
-    %     \textbf{Phase 4: Tile Mapping (Preparing Radix Sort)}
-    %     \begin{itemize}
-    %         \justifying
-    %         \item The target output image is divided into a grid of $16\times16$ pixel tiles.
-    %         \item The algorithm calculates a 2D bounding box to map exactly which tiles a given 2D Gaussian covers.
-    %         \item Assigns each 2D Gaussian to a tile. If overlapping, assigns to all affected tiles.
-    %     \end{itemize}
-        
-    %     \vspace{1em}
-        
-    %     \uncover<2->{
-    %         \textbf{Phase 5: Global Radix Sort}
-    %         \begin{itemize}
-    %             \justifying
-    %             \item The GPU waits until all per-Gaussian computations are finished.
-    %             \item A highly optimized Radix Sort is executed, organizing the 2D Gaussians for each tile strictly by depth (closest to farthest).
-    %         \end{itemize}
-    %     }
-    % }
-
-    % \only<3>{
-    %     \begin{figure}
-    %         \centering
-    %         % Scales the entire graphic to perfectly fit the slide width
-    %         \resizebox{0.6\linewidth}{!}{%
-    %         \begin{tikzpicture}[every node/.style={transform shape}]
-                
-    %             % 1. BACKGROUND FILLS
-    %             % Main 16x16 Tile Background
-    %             \fill[blue!5] (0, 0) rectangle (8, -8);
-    %             % Adjacent Tiles Backgrounds
-    %             \fill[gray!10] (8, 0) rectangle (9, -8); % Right
-    %             \fill[gray!10] (0, -8) rectangle (8, -9); % Bottom
-    %             \fill[gray!10] (8, -8) rectangle (9, -9); % Bottom-Right
-                
-    %             % 2. PIXEL GRID (1 pixel = 0.5 units -> 16 pixels = 8 units)
-    %             % Draws the 18x18 pixel grid
-    %             \draw[step=0.5cm, blue!20, very thin] (0, -9) grid (9, 0);
-                
-    %             % 3. TILE BOUNDARIES
-    %             % Main 16x16 Tile Border
-    %             \draw[blue!80!black, very thick] (0, 0) rectangle (8, -8);
-    %             % Adjacent Tile Separators
-    %             \draw[gray!50, very thick, dashed] (8, -8) -- (8, -9);
-    %             \draw[gray!50, very thick, dashed] (8, -8) -- (9, -8);
-                
-    %             % 4. LABELS FOR TILES
-    %             \node[blue!80!black, font=\Large\bfseries, anchor=north west] at (0.2, -0.2) {16$\times$16 Pixel Tile};
-    %             \node[gray!60!black, font=\small\bfseries, anchor=north west] at (0.2, -8.225) {Adjacent Tiles};
-
-                
-    %             % ==========================================
-    %             % 5. 2D GAUSSIANS & BOUNDING BOXES
-    %             % ==========================================
-
-    %             % --- GAUSSIAN 0: Behind Gaussian 1 (Fully Inside) ---
-    %             % Center: (4.2, -1.8), Radii: (1.4, 1.0), Rotation: -20 degrees
-    %             \foreach \s in {1.0, 0.93, 0.87, 0.8, 0.73, 0.67, 0.6, 0.53, 0.47, 0.4, 0.33, 0.27, 0.2, 0.13, 0.07} {
-    %                 \fill[cyan!60!blue, opacity=0.08, rotate around={-20:(4.2,-2.8)}] (4.2,-2.8) ellipse ({1.4*\s} and {1.0*\s});
-    %             }
-    %             \draw[cyan!60!blue, thick, rotate around={-20:(4.2,-2.8)}] (4.2,-2.8) ellipse (1.4 and 1.0);
-                
-    %             % --- GAUSSIAN 1: Fully Inside ---
-    %             % Center: (3, -3), Radii: (1.8, 0.9), Rotation: 35 degrees
-    %             \foreach \s in {1.0, 0.93, 0.87, 0.8, 0.73, 0.67, 0.6, 0.53, 0.47, 0.4, 0.33, 0.27, 0.2, 0.13, 0.07} {
-    %                 \fill[green!50!black, opacity=0.08, rotate around={35:(3,-4)}] (3,-4) ellipse ({1.8*\s} and {0.9*\s});
-    %             }
-    %             \draw[green!50!black, thick, rotate around={35:(3,-4)}] (3,-4) ellipse (1.8 and 0.9);
-    %             % Calculated tight bounding box
-    %             \draw[red!80!black, thick, dashed] (1.44, -2.73) rectangle (4.56, -5.27);
-    %             % Calculated tight bounding box
-    %             \draw[red!80!black, thick, dashed] (2.84, -1.75) rectangle (5.56, -3.85);
-    %             \node[red!80!black, font=\footnotesize\bfseries, anchor=north] at (2.6, -5.27) {Bounding Boxes};
-
-
-    %             % --- GAUSSIAN 2: Overlapping Boundary ---
-    %             % Center: (7.0, -6.0), Radii: (1.5, 0.8), Rotation: 45 degrees
-    %             \foreach \s in {1.0, 0.93, 0.87, 0.8, 0.73, 0.67, 0.6, 0.53, 0.47, 0.4, 0.33, 0.27, 0.2, 0.13, 0.07} {
-    %                 \fill[purple!60!black, opacity=0.08, rotate around={45:(7.0,-6.0)}] (7.0,-6.0) ellipse ({1.5*\s} and {0.8*\s});
-    %             }
-    %             \draw[purple!60!black, thick, rotate around={45:(7.0,-6.0)}] (7.0,-6.0) ellipse (1.5 and 0.8);
-    %             % Calculated tight bounding box (bleeds past X=8)
-    %             \draw[red!80!black, thick, dashed] (5.8, -4.8) rectangle (8.2, -7.2);
-                
-    %             % Annotation for the boundary overlap
-    %             \draw[-Latex, thick, purple!80!black] (6.5, -7.6) -- (8.1, -7.3);
-    %             \node[font=\footnotesize\bfseries, purple!80!black, align=center, anchor=north] at (6.2, -7.55) {Box overlaps boundary\\(assigned to both tiles)};
-
-
-    %             % --- GAUSSIAN 3: Completely Outside ---
-    %             % Center: (8.5, -2), Radii: (0.3, 0.6), Rotation: 15 degrees
-    %             \foreach \s in {1.0, 0.93, 0.87, 0.8, 0.73, 0.67, 0.6, 0.53, 0.47, 0.4, 0.33, 0.27, 0.2, 0.13, 0.07} {
-    %                 \fill[gray!70!black, opacity=0.06, rotate around={15:(8.5,-2)}] (8.5,-2) ellipse ({0.3*\s} and {0.6*\s});
-    %             }
-    %             \draw[gray!70!black, thick, rotate around={15:(8.5,-2)}] (8.5,-2) ellipse (0.3 and 0.6);
-    %             % Calculated tight bounding box (strictly X > 8)
-    %             \draw[red!80!black, thick, dashed] (8.17, -1.42) rectangle (8.83, -2.58);
-                
-    %             % Annotation for excluded Gaussian
-    %             \draw[-Latex, thick, gray!80!black] (9.0, -0.74) -- (8.5, -1.3); 
-    %             \node[font=\footnotesize\bfseries, gray!80!black, align=center, anchor=south] at (9.2, -0.9) {Excluded\\(outside tile)};
-                
-    %         \end{tikzpicture}%
-    %         }
-    %     \end{figure}
-    % }
 \end{frame}
 
 \begin{frame}{Forward Pass: Phase 6}
     % Overlay 1: Text only
-    % \only<1>{
     \textbf{Phase 6: Tile-Based Rasterization (Splatting)}
     \vspace*{2mm}
     \begin{itemize}
@@ -510,9 +402,10 @@
         $$
         }}
     \end{itemize}
-        %\item \textbf{Early Stopping:} Threads stop calculating exactly when transmittance ($T_i$) drops near zero, ignoring hidden geometry for massive speed-ups.
+
     \pause
     \vspace*{1mm}
+
     \begin{figure}
         \centering
         \begin{tikzpicture}[scale=0.65, every node/.style={transform shape}]
@@ -598,88 +491,6 @@
         \textCR
         - This completes the forward pass (continue to training cycle)
     }
-    
-    % Overlay 2: Graphic only (replaces the text on the same frame number)
-    % \only<2>{
-    %     \begin{figure}
-    %         \centering
-    %         % Scales the entire graphic to perfectly fit the slide width
-    %         \hspace*{-5mm}
-    %         \begin{tikzpicture}[scale=0.73, every node/.style={transform shape}]
-                
-    %             % 1. Mathematically derived blended color from alpha compositing
-    %             % C_p = (0.4 * Red) + (0.5 * 0.6 * Green) + (0.8 * 0.3 * Blue)
-    %             \definecolor{blendedColor}{rgb}{0.64, 0.54, 0.0}
-                
-    %             % 2. The Target Pixel on the View Plane
-    %             \draw[thick, blue!60!black, fill=blendedColor] (-2.5, -1.2) rectangle (-0.5, 1.2);
-    %             \node[font=\Large\bfseries, blue!80!black, align=center] at (-1.5, 1.9) {Target \\ Pixel $p$};
-    %             \node[circle, fill=black, inner sep=1.5pt] (pixel) at (-1.5,0) {};
-                
-    %             % Labels inside the colored pixel
-    %             \node[font=\small\bfseries, text=white] at (-1.5, 0.4) {Blended};
-    %             \node[font=\small\bfseries, text=white] at (-1.5, -0.4) {Color};
-                
-    %             % 3. The Rendering Thread / Depth Ray
-    %             \draw[-Latex, very thick, gray] (pixel) -- (16.5, 0) node[right, font=\Large\bfseries] {Depth};
-                
-    %             % 4. Sorted 2D Gaussians (Alpha Compositing)
-    %             % Splat 1 (Target alpha 0.4 -> ~0.09 per layer)
-    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-    %                 \fill[red, opacity=0.09] (2.5, 0) ellipse ({0.6*\s} and {1.2*\s});
-    %             }
-    %             \draw[red!80!black, thick] (2.5, 0) ellipse (0.6 and 1.2);
-    %             \node[circle, fill=black!80, inner sep=1.2pt] at (2.5, 0) {}; % Piercing dot
-    %             \node[above, font=\large\bfseries] at (2.5, 1.4) {Gaussian 1};
-    %             \node[below, font=\normalsize, align=center] at (2.5, -1.3) {Opacity \\ $\alpha_1=0.4$};
-    %             \node[below, font=\normalsize\bfseries, text=blue!70!black] at (2.5, -2.3) {$T_1=1.00$};
-                
-    %             % Splat 2 (Target alpha 0.5 -> ~0.12 per layer)
-    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-    %                 \fill[green, opacity=0.12] (6, 0.3) ellipse ({0.7*\s} and {1.3*\s});
-    %             }
-    %             \draw[green!80!black, thick] (6, 0.3) ellipse (0.7 and 1.3);
-    %             \node[circle, fill=black!80, inner sep=1.2pt] at (6, 0) {}; % Piercing dot
-    %             \node[above, font=\large\bfseries] at (6, 1.8) {Gaussian 2};
-    %             \node[below, font=\normalsize, align=center] at (6, -1.3) {Opacity \\ $\alpha_2=0.5$};
-    %             \node[below, font=\normalsize\bfseries, text=blue!70!black] at (6, -2.3) {$T_2=0.60$};
-                
-    %             % Splat 3 (Target alpha 0.8 -> ~0.27 per layer)
-    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-    %                 \fill[yellow, opacity=0.27] (9.5, -0.2) ellipse ({0.5*\s} and {1.0*\s});
-    %             }
-    %             \draw[yellow!80!black, thick] (9.5, -0.2) ellipse (0.5 and 1.0);
-    %             \node[circle, fill=black!80, inner sep=1.2pt] at (9.5, 0) {}; % Piercing dot
-    %             \node[above, font=\large\bfseries] at (9.5, 1.2) {Gaussian 3};
-    %             \node[below, font=\normalsize, align=center] at (9.5, -1.3) {Opacity \\ $\alpha_3=0.8$};
-    %             \node[below, font=\normalsize\bfseries, text=blue!70!black] at (9.5, -2.3) {$T_3=0.30$};
-                
-    %             % 5. Early Stopping Barrier
-    %             \draw[dashed, red, very thick] (11.5, -2.5) -- (11.5, 2.5);
-    %             \node[red, font=\Large\bfseries, rotate=90] at (12, 0) {Early Stopping ($T_4 = 0.06 \approx 0$)};
-                
-    %             % 6. Culled / Ignored Geometry
-    %             % Splat 4 (Ignored)
-    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-    %                 \fill[gray, opacity=0.07] (13.5, 0.4) ellipse ({0.6*\s} and {1.1*\s});
-    %             }
-    %             \draw[gray, dashed, thick] (13.5, 0.4) ellipse (0.6 and 1.1);
-    %             \node[circle, fill=gray!80!black, inner sep=1.2pt] at (13.5, 0) {}; % Piercing dot
-    %             \node[above, font=\large\bfseries, text=gray] at (13.5, 1.7) {Gaussian 4};
-                
-    %             % Splat 5 (Ignored)
-    %             \foreach \s in {1, 0.8, 0.6, 0.4, 0.2} {
-    %                 \fill[gray, opacity=0.04] (15, -0.3) ellipse ({0.7*\s} and {0.9*\s});
-    %             }
-    %             \draw[gray, dashed, thick] (15, -0.3) ellipse (0.7 and 0.9);
-    %             \node[circle, fill=gray!80!black, inner sep=1.2pt] at (15, 0) {}; % Piercing dot
-    %             \node[above, font=\large\bfseries, text=gray] at (15.2, 0.8) {Gaussian 5};
-                
-    %             \node[text=gray, font=\Large\bfseries, align=center] at (14.25, -1.9) {Geometry\\Ignored};
-                
-    %         \end{tikzpicture}%
-    %     \end{figure}
-    % }
 \end{frame}
 
 \begingroup
